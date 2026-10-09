@@ -8,7 +8,7 @@ import { Page, Panel } from '@/components/AppShell'
 import { Button, IconButton, inputClass } from '@/components/ui'
 import { cn } from '@/lib/utils'
 
-const ERA_COLORS = ['#4f83e6', '#34a061', '#e8a531', '#9466d4', '#e0607e', '#2bb3b1']
+const ERA_COLORS = ['#141518', '#55585f', '#8d9098', '#3a3b40', '#6f7279', '#a5a7ad']
 
 export default function Timeline() {
   const { bookId } = useParams()

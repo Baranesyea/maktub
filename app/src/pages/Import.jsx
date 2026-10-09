@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils'
 import { toast } from '@/lib/toast'
 
 const TYPE_LABEL = { part: 'חלק', chapter: 'פרק', scene: 'סצנה' }
-const TYPE_COLOR = { part: 'bg-[#9466d4]', chapter: 'bg-accent', scene: 'bg-[#34a061]' }
+const TYPE_COLOR = { part: 'bg-fg text-bg', chapter: 'bg-[#55585f] text-white', scene: 'bg-[#8d9098] text-white' }
 
 // Is a text node bold? The nearest element that says so decides. Google Docs marks bold with
 // font-weight:700 on a span, and wraps the whole paste in <b style="font-weight:normal">.
@@ -305,7 +305,7 @@ export default function ImportPage() {
                   <div key={i} className="group">
                     {bd && (
                       <div className="flex flex-wrap items-center gap-2 mt-3 mb-1 rounded-lg bg-surface border border-line p-2 text-sm" data-testid="boundary">
-                        <span className={cn('text-white text-xs rounded px-1.5 py-0.5', TYPE_COLOR[bd.type])}>{TYPE_LABEL[bd.type]}</span>
+                        <span className={cn('text-xs rounded px-1.5 py-0.5', TYPE_COLOR[bd.type])}>{TYPE_LABEL[bd.type]}</span>
                         <select className="h-8 rounded-md border border-line bg-bg px-1" value={bd.type} onChange={(e) => setB(i, e.target.value ? { ...bd, type: e.target.value } : null)} aria-label="סוג">
                           <option value="part">חלק</option><option value="chapter">פרק</option><option value="scene">סצנה</option><option value="">בטל פיצול (מזג עם הקודם)</option>
                         </select>

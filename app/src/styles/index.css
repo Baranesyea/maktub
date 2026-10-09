@@ -5,31 +5,31 @@
 /* Maktub design tokens. Four colour themes, chosen in settings and remembered.
    data-theme on <html> picks one; "dark" also sets the .dark class. */
 :root, [data-theme="light"] {
-  --bg: #f3f4f6;
+  --bg: #f2f2f3;
   --surface: #ffffff;
-  --sunk: #f0f1f4;
-  --raised: #fafbfc;
-  --fg: #15171c;
-  --muted: #5e6471;
-  --faint: #8a909c;
-  --line: #e3e5ea;
-  --line-strong: #cfd3da;
-  --accent: #1f2b4d;
+  --sunk: #efeff0;
+  --raised: #f9f9fa;
+  --fg: #141518;
+  --muted: #5f6066;
+  --faint: #8c8d93;
+  --line: #e2e2e5;
+  --line-strong: #cdcdd2;
+  --accent: #141518;
   --accent-fg: #ffffff;
-  --accent-soft: #e9ecf3;
-  --link: #2c4a9a;
-  --rail-bg: #0f1013;
-  --rail-fg: #9a9fab;
+  --accent-soft: #ececee;
+  --link: var(--fg);
+  --rail-bg: #111113;
+  --rail-fg: #9d9da3;
   --rail-hover: rgba(255, 255, 255, 0.06);
   --rail-active: rgba(255, 255, 255, 0.1);
-  --warn: #a5560b;
-  --ok: #17803d;
-  --danger: #b42318;
-  --note-fix: #e2b12a;
-  --note-check: #4f83e6;
-  --note-idea: #34a061;
-  --note-question: #9466d4;
-  --anchor-bg: rgba(232, 185, 49, 0.22);
+  --warn: #4a4c52;
+  --ok: #141518;
+  --danger: #141518;
+  --note-fix: #141518;
+  --note-check: #55585f;
+  --note-idea: #8d9098;
+  --note-question: #b6b8bd;
+  --anchor-bg: rgba(20, 21, 24, 0.07);
   --ui-font: 'Fb Gofan Sans', 'Assistant', system-ui, sans-serif;
   --write-font: 'Fb Gofan Sans', 'Assistant', system-ui, sans-serif;
   --write-size: 19px;
@@ -48,56 +48,69 @@
   --faint: #978d7c;
   --line: #e6dcc8;
   --line-strong: #d6c9b0;
-  --accent: #2f2a22;
+  --accent: #221f1a;
   --accent-fg: #fffcf5;
-  --accent-soft: #efe6d4;
-  --link: #7a4f12;
+  --accent-soft: #ebe5d8;
+  --link: var(--fg);
   --rail-bg: #1d1a15;
   --rail-fg: #a89f8f;
   --shadow: 0 1px 2px rgba(60, 45, 20, 0.06), 0 6px 20px rgba(60, 45, 20, 0.07);
   --shadow-sm: 0 1px 2px rgba(60, 45, 20, 0.08);
-  --anchor-bg: rgba(226, 177, 42, 0.25);
+  --anchor-bg: rgba(34, 31, 26, 0.08);
+  --warn: #4f483d;
+  --ok: #221f1a;
+  --danger: #221f1a;
 }
 [data-theme="gray"] {
-  --bg: #e6e8eb;
-  --surface: #f6f7f8;
-  --sunk: #e9ebee;
-  --raised: #eff1f3;
-  --fg: #181b20;
-  --muted: #565d69;
-  --faint: #838a96;
-  --line: #d4d8de;
-  --line-strong: #c0c5cd;
-  --accent: #1d2533;
+  --bg: #e5e5e7;
+  --surface: #f5f5f6;
+  --sunk: #e8e8ea;
+  --raised: #eeeef0;
+  --fg: #17181b;
+  --muted: #55575d;
+  --faint: #85878d;
+  --line: #d3d3d7;
+  --line-strong: #bfc0c5;
+  --accent: #17181b;
   --accent-fg: #ffffff;
-  --accent-soft: #dde1e8;
-  --link: #2f4a85;
-  --rail-bg: #16191e;
-  --rail-fg: #9aa0ab;
+  --accent-soft: #dcdde0;
+  --link: var(--fg);
+  --rail-bg: #141416;
+  --rail-fg: #9b9ba1;
+  --warn: #45474c;
+  --ok: #17181b;
+  --danger: #17181b;
 }
 [data-theme="dark"], .dark {
-  --bg: #121418;
-  --surface: #1a1d23;
-  --sunk: #16181d;
-  --raised: #1e2128;
-  --fg: #e7e9ee;
-  --muted: #9ba2af;
-  --faint: #737a87;
-  --line: #2a2e37;
-  --line-strong: #3a3f4a;
-  --accent: #e7e9ee;
-  --accent-fg: #121418;
-  --accent-soft: #262a33;
-  --link: #9db4f0;
-  --rail-bg: #0b0c0f;
-  --rail-fg: #8b919c;
-  --warn: #f0a33c;
-  --ok: #4ade80;
-  --danger: #f87171;
-  --anchor-bg: rgba(232, 185, 49, 0.18);
+  --bg: #121213;
+  --surface: #1a1a1c;
+  --sunk: #161617;
+  --raised: #1f1f21;
+  --fg: #ececed;
+  --muted: #a0a0a6;
+  --faint: #76767c;
+  --line: #2b2b2e;
+  --line-strong: #3b3b3f;
+  --accent: #ececed;
+  --accent-fg: #121213;
+  --accent-soft: #2a2a2d;
+  --link: var(--fg);
+  --rail-bg: #0b0b0c;
+  --rail-fg: #8d8d93;
+  --warn: #c4c4c8;
+  --ok: #ececed;
+  --danger: #ececed;
+  --anchor-bg: rgba(236, 236, 237, 0.1);
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 6px 20px rgba(0, 0, 0, 0.3);
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
   color-scheme: dark;
+  --note-fix: #ececed;
+  --note-check: #b0b0b5;
+  --note-idea: #7d7d83;
+  --note-question: #56565b;
+  --status-idea: #4a4a4f;
+  --status-draft: #7d7d83;
+  --status-editing: #b0b0b5;
 }
 
 html, body, #root { height: 100%; }
@@ -150,7 +163,7 @@ button { -webkit-user-select: none; user-select: none; }
 .prose-write.indent-first .ProseMirror p { margin-bottom: 0.15em; }
 .prose-write.indent-first .ProseMirror p + p { text-indent: 1.4em; }
 .prose-write.para-spaced .ProseMirror p { margin-bottom: 0.85em; }
-.prose-write mark { background: color-mix(in srgb, #f5d547 55%, transparent); color: inherit; border-radius: 2px; padding: 0 1px; }
+.prose-write mark { background: color-mix(in srgb, var(--fg) 14%, transparent); color: inherit; border-radius: 2px; padding: 0 1px; }
 
 /* Note anchors inside the text */
 .note-anchor { background: var(--anchor-bg); border-bottom: 2px solid var(--note-fix); border-radius: 2px; cursor: pointer; }

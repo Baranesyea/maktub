@@ -36,7 +36,7 @@ const DRIVE_ICON = { off: CloudOff, synced: Cloud, syncing: Loader2, pending: Cl
 function DriveRailItem({ bookId }) {
   const state = useDriveState(bookId || '_')
   const Icon = DRIVE_ICON[state.status] || Cloud
-  const dot = state.status === 'synced' ? 'bg-emerald-400' : state.status === 'off' ? 'bg-[var(--rail-fg)]' : 'bg-amber-400'
+  const dot = state.status === 'synced' ? 'bg-white' : state.status === 'off' ? 'bg-transparent ring-1 ring-[var(--rail-fg)]' : 'bg-[var(--rail-fg)]'
   const label = state.status === 'off' ? 'לא מגובה' : state.status === 'attention' ? 'דורש טיפול' : 'גיבוי'
   return (
     <NavLink to="/settings#drive" title={state.status === 'off' ? 'הספרים עוד לא מגובים בגוגל דרייב' : 'גיבוי לגוגל דרייב'}

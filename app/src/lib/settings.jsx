@@ -24,10 +24,10 @@ const DEFAULTS = {
 }
 
 export const THEMES = [
-  { id: 'light', name: 'בהיר', swatch: ['#ffffff', '#f3f4f6', '#1f2b4d'] },
-  { id: 'warm', name: 'שמנת', swatch: ['#fffcf5', '#f4efe4', '#2f2a22'] },
-  { id: 'gray', name: 'אפור', swatch: ['#f6f7f8', '#e6e8eb', '#1d2533'] },
-  { id: 'dark', name: 'כהה', swatch: ['#1a1d23', '#121418', '#e7e9ee'] },
+  { id: 'light', name: 'בהיר', swatch: ['#ffffff', '#f2f2f3', '#141518'] },
+  { id: 'warm', name: 'שמנת', swatch: ['#fffcf5', '#f4efe4', '#221f1a'] },
+  { id: 'gray', name: 'אפור', swatch: ['#f5f5f6', '#e5e5e7', '#17181b'] },
+  { id: 'dark', name: 'כהה', swatch: ['#1a1a1c', '#121213', '#ececed'] },
 ]
 
 const LOCAL_KEY = 'maktub_settings_cache'
@@ -43,7 +43,7 @@ function applyToDocument(s) {
   const theme = THEMES.some((t) => t.id === s.theme) ? s.theme : 'light'
   root.dataset.theme = theme
   root.classList.toggle('dark', theme === 'dark')
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', getComputedStyle(root).getPropertyValue('--bg').trim() || '#f3f4f6')
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', getComputedStyle(root).getPropertyValue('--bg').trim() || '#f2f2f3')
 }
 
 export function SettingsProvider({ children }) {

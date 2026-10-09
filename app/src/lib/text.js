@@ -103,10 +103,10 @@ export function hashString(s = '') {
 }
 
 export const SCENE_STATUS = {
-  idea: { label: 'רעיון', color: '#9aa3b3' },
-  draft: { label: 'טיוטה', color: '#4f83e6' },
-  editing: { label: 'בעריכה', color: '#e8a531' },
-  done: { label: 'גמור', color: '#34a061' },
+  idea: { label: 'רעיון', color: 'var(--status-idea, #c9cace)' },
+  draft: { label: 'טיוטה', color: 'var(--status-draft, #8d9098)' },
+  editing: { label: 'בעריכה', color: 'var(--status-editing, #55585f)' },
+  done: { label: 'גמור', color: 'var(--fg)' },
 }
 
 export const NOTE_TYPES = {

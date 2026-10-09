@@ -219,7 +219,7 @@ function TodayCard({ bookId }) {
                 data-testid="note-to-self"
               />
             </label>
-            {!plan.hasPlan && <Link to={`/book/${bookId}/plan`} className="text-[13px] text-link hover:underline self-start">קבעו תאריך סיום וזמני כתיבה, ומכתוב יחשב יעד יומי</Link>}
+            {!plan.hasPlan && <Link to={`/book/${bookId}/plan`} className="text-[13px] underline underline-offset-4 decoration-line-strong hover:decoration-fg self-start">קבעו תאריך סיום וזמני כתיבה, ומכתוב יחשב יעד יומי</Link>}
           </div>
         </Panel>
         <Panel title="30 הימים האחרונים" description="מילים שהקלדת בכל יום">
