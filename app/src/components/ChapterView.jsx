@@ -72,7 +72,7 @@ const ChapterView = forwardRef(function ChapterView({ bk, chapter, activeSceneId
     <div className="relative flex-1 min-h-0">
       <div ref={scrollRef} className="absolute inset-0 overflow-y-auto" data-testid="editor-scroll" onScroll={() => {}}>
         <div className="mx-auto px-5 sm:px-10 pt-10 pb-[40vh]" style={{ maxWidth: `calc(${maxWidth} + 96px)` }}>
-          <h1 className="text-center font-write text-[1.5em] mb-8 text-fg" style={{ fontSize: 'calc(var(--write-size) * 1.45)' }} data-testid="chapter-title">{chapterLabel(chapter)}</h1>
+          <h1 className="text-center font-write font-black text-[1.5em] mb-8 text-fg" style={{ fontSize: 'calc(var(--write-size) * 1.45)' }} data-testid="chapter-title">{chapterLabel(chapter)}</h1>
           <div ref={contentRef} className="relative">
             {chapter.scenes.map((s, i) => (
               <section key={s.id} data-scene-block={s.id} className={cn('relative', s.unused && 'opacity-60')}>

@@ -6,3 +6,12 @@ export function Logo({ height = 22, className = '', title = 'מכתוב' }) {
     </svg>
   )
 }
+
+/** The square mark (the letter on the app icon), in the text colour. */
+export function LogoMark({ size = 28, className = '' }) {
+  return (
+    <svg viewBox="4 4 56 56" width={size} height={size} className={className} aria-hidden fill="currentColor">
+      <path transform="translate(9.45 47.67) scale(0.05500)" d="M64 -338H94C107 -338 112 -333 108 -319C83 -228 50 -111 40 -56C33 -19 46 0 71 0C133 0 195 -1 257 -1C269 -1 283 -17 286 -29C298 -86 331 -208 363 -314C367 -327 380 -336 394 -336H521C528 -336 547 -326 547 -309V-255C547 -240 544 -232 521 -232C487 -232 465 -234 438 -234C408 -234 397 -221 397 -184L398 -47C398 -13 398 0 435 0C696 3 561 4 754 0C777 -1 795 -18 794 -41C792 -73 790 -469 790 -520C790 -559 762 -571 747 -571C164 -574 638 -572 55 -572C38 -572 27 -561 27 -534C27 -479 26 -414 26 -377C26 -357 41 -338 64 -338Z" />
+    </svg>
+  )
+}

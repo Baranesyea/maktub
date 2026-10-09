@@ -6,7 +6,8 @@ export default {
     extend: {
       colors: {
         bg: 'var(--bg)', surface: 'var(--surface)', sunk: 'var(--sunk)', fg: 'var(--fg)',
-        muted: 'var(--muted)', line: 'var(--line)', accent: 'var(--accent)', 'accent-soft': 'var(--accent-soft)',
+        muted: 'var(--muted)', faint: 'var(--faint)', line: 'var(--line)', 'line-strong': 'var(--line-strong)', raised: 'var(--raised)',
+        accent: 'var(--accent)', 'accent-fg': 'var(--accent-fg)', 'accent-soft': 'var(--accent-soft)', link: 'var(--link)',
         warn: 'var(--warn)', ok: 'var(--ok)', danger: 'var(--danger)',
       },
       fontFamily: { ui: ['var(--ui-font)'], write: ['var(--write-font)'] },

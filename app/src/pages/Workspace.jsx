@@ -1,4 +1,3 @@
-import { Logo } from '@/components/Logo'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams, Link } from 'react-router-dom'
 import { Menu as MenuIcon, PanelLeft, Maximize2, Minimize2, BookOpen, Search, MoreVertical, Home, LayoutGrid, FileText, Upload, Download, CalendarClock, Clock, Trash2, Settings, HelpCircle, Check, X, Layers } from 'lucide-react'
@@ -329,7 +328,6 @@ export default function Workspace() {
       {/* Top bar */}
       <header className="chrome h-14 shrink-0 flex items-center gap-1 px-2 border-b border-line bg-surface min-w-0">
         {!focusMode && <IconButton label="עץ הספר" onClick={() => setTreeOpen((x) => !x)} active={treeOpen} data-testid="toggle-tree"><MenuIcon size={18} /></IconButton>}
-        <Link to="/" className="hit hidden sm:inline-flex items-center px-2 rounded-lg hover:bg-sunk" aria-label="מסך הבית"><Logo height={18} title={null} /></Link>
         <div className="hidden md:flex items-center gap-1 rounded-lg bg-sunk p-0.5" role="group" aria-label="תצוגה">
           <button className={cn('h-8 px-2.5 rounded-md text-sm inline-flex items-center gap-1', view === 'write' ? 'bg-surface shadow-sm' : 'text-muted')} onClick={() => setView('write')}><FileText size={15} />כתיבה</button>
           <button className={cn('h-8 px-2.5 rounded-md text-sm inline-flex items-center gap-1', view === 'board' ? 'bg-surface shadow-sm' : 'text-muted')} onClick={() => setView('board')} data-testid="view-board"><LayoutGrid size={15} />כרטיסים</button>
@@ -337,12 +335,17 @@ export default function Workspace() {
         <div className="flex-1 min-w-0 flex items-center justify-center">
           {view === 'write' && !focusMode && layout !== 'narrow' && <FormatBar editor={activeEditor} onAddNote={addNote} onSplit={splitHere} className="hidden lg:inline-flex" />}
         </div>
-        <Link to="/" className="hit hidden md:inline-flex items-center gap-1 rounded-lg px-2 text-sm text-muted hover:bg-sunk tabular-nums" title="היעד של היום" data-testid="today-pill">
-          היום {formatNumber(today.words)}{plan.todayTarget ? ` / ${formatNumber(plan.todayTarget)}` : ''}
-          {plan.todayTarget > 0 && today.words >= plan.todayTarget && <Check size={14} className="text-ok" />}
-        </Link>
-        <SaveStatus compact={layout !== 'wide'} />
-        {layout !== 'narrow' && <DriveBadge state={drive} onClick={() => navigate('/settings#drive')} />}
+        <div className="flex items-center rounded-lg border border-line bg-raised h-10 px-0.5 gap-0.5 min-w-0">
+          <Link to="/" className="hit hidden md:inline-flex items-center gap-1 rounded-md px-2 text-sm text-muted hover:bg-sunk tabular-nums whitespace-nowrap" title="היעד של היום" data-testid="today-pill">
+            היום {formatNumber(today.words)}{plan.todayTarget ? ` / ${formatNumber(plan.todayTarget)}` : ''}
+            {plan.todayTarget > 0 && today.words >= plan.todayTarget && <Check size={14} className="text-ok" />}
+          </Link>
+          <span className="hidden md:block w-px h-5 bg-line" aria-hidden />
+          <span className="px-1.5"><SaveStatus compact={layout !== 'wide'} /></span>
+          {layout !== 'narrow' && <span className="w-px h-5 bg-line" aria-hidden />}
+          {layout !== 'narrow' && <DriveBadge state={drive} onClick={() => navigate('/settings#drive')} />}
+        </div>
+        <span className="w-1" />
         {layout !== 'narrow' && <TextSizeControl value={size} onChange={setSize} />}
         {layout !== 'narrow' && <SprintButton />}
         {layout !== 'narrow' && <IconButton label={focusMode ? 'צא ממצב ריכוז (Esc)' : 'מצב ריכוז'} onClick={() => setFocusMode((x) => !x)} active={focusMode} data-testid="focus-toggle" data-tour="focus">{focusMode ? <Minimize2 size={18} /> : <Maximize2 size={18} />}</IconButton>}

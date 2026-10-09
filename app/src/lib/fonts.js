@@ -16,4 +16,4 @@ export const FONTS = [
 ]
 export const fontById = (id) => FONTS.find((f) => f.id === id) || FONTS[4]
 export const DEFAULT_UI_FONT = 'gofan'
-export const DEFAULT_WRITE_FONT = 'frank'
+export const DEFAULT_WRITE_FONT = 'gofan'

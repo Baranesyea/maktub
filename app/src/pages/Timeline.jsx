@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowRight, Plus, Trash2, ChevronDown, ChevronLeft } from 'lucide-react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { Plus, Trash2, ChevronDown, ChevronLeft } from 'lucide-react'
 import { useBook, chapterLabel } from '@/hooks/useBook'
 import { resolveTime, midpoint, formatTime, jumps, timelineChecks } from '@/lib/timeline'
 import { StoryTimeEditor } from '@/components/SidePanel'
+import { Page, Panel } from '@/components/AppShell'
 import { Button, IconButton, inputClass } from '@/components/ui'
 import { cn } from '@/lib/utils'
 
@@ -39,35 +40,32 @@ export default function Timeline() {
   const W = 640, H = 220
   const n = Math.max(1, reading.length - 1), m = Math.max(1, chrono.length - 1)
   return (
-    <div className="h-full overflow-y-auto">
-      <header className="h-14 flex items-center gap-2 px-4 border-b border-line bg-surface">
-        <Link to={`/book/${bookId}`} className="hit inline-flex items-center gap-1 rounded-lg px-2 hover:bg-sunk"><ArrowRight size={17} />לספר</Link>
-        <span className="font-semibold">ציר זמן</span>
-        <div className="flex-1" />
-        <div className="flex gap-1 rounded-lg bg-sunk p-0.5" role="radiogroup" aria-label="סדר">
+    <Page eyebrow={bk.book.title} title="ציר זמן" subtitle="מתי כל סצנה קרתה בסיפור, לעומת הסדר שבו הקורא פוגש אותה." testid="timeline"
+      actions={
+        <div className="flex gap-1 rounded-lg border border-line bg-raised p-0.5" role="radiogroup" aria-label="סדר">
           <button role="radio" aria-checked={order === 'reading'} className={cn('h-8 px-3 rounded-md text-sm', order === 'reading' ? 'bg-surface shadow-sm' : 'text-muted')} onClick={() => setOrder('reading')} data-testid="order-reading">סדר קריאה</button>
           <button role="radio" aria-checked={order === 'chrono'} className={cn('h-8 px-3 rounded-md text-sm', order === 'chrono' ? 'bg-surface shadow-sm' : 'text-muted')} onClick={() => setOrder('chrono')} data-testid="order-chrono">סדר כרונולוגי</button>
         </div>
-      </header>
-      <main className="max-w-5xl mx-auto px-4 py-6 grid gap-6 lg:grid-cols-[1fr_300px]">
-        <section className="flex flex-col gap-2 min-w-0">
+      }>
+      <div className="grid gap-6 lg:grid-cols-[1fr_320px] items-start">
+        <Panel title={order === 'chrono' ? 'לפי מתי זה קרה' : 'לפי סדר הקריאה'} description={`${list.length} סצנות`} bodyClass="p-0">
           {(checks.undated > 0 || checks.issues.length > 0) && (
-            <div className="rounded-xl border border-line bg-surface p-3 text-sm flex flex-col gap-1">
+            <div className="border-b border-line bg-raised px-5 py-3 text-sm flex flex-col gap-1">
               {checks.undated > 0 && <div className="text-muted">{checks.undated} סצנות עוד בלי תאריך. זה בסדר, הן פשוט לא מופיעות בסדר הכרונולוגי.</div>}
               {checks.issues.map((x, i) => <div key={i} className="text-warn">⚠ {x.text}</div>)}
             </div>
           )}
-          {order === 'chrono' && chrono.length === 0 && <p className="text-muted">עוד אין סצנות עם תאריך. פתחו סצנה ובחרו "מתי זה קרה".</p>}
+          {order === 'chrono' && chrono.length === 0 && <p className="text-muted p-5">עוד אין סצנות עם תאריך. פתחו סצנה ובחרו "מתי זה קרה".</p>}
           {list.map(({ s, c }) => {
             const r = resolveTime(s, ctx)
             const era = eraOf(r)
             const j = jumpMap[s.id]
             return (
-              <div key={s.id} className="rounded-xl border border-line bg-surface" data-testid="timeline-row">
-                <div className="flex items-center gap-2 px-3 min-h-[48px] cursor-pointer" onClick={() => setOpen(open === s.id ? null : s.id)}>
+              <div key={s.id} className="border-b border-line last:border-b-0" data-testid="timeline-row">
+                <div className="flex items-center gap-2 px-5 min-h-[52px] cursor-pointer hover:bg-raised" onClick={() => setOpen(open === s.id ? null : s.id)}>
                   {open === s.id ? <ChevronDown size={15} className="text-muted" /> : <ChevronLeft size={15} className="text-muted" />}
                   <div className="flex-1 min-w-0">
-                    <div className="truncate font-medium">{s.title || 'סצנה ללא שם'}</div>
+                    <div className="truncate font-black">{s.title || 'סצנה ללא שם'}</div>
                     <div className="text-xs text-muted truncate">{chapterLabel(c)}</div>
                   </div>
                   {order === 'reading' && j && <span className={cn('text-xs rounded-full px-2 py-0.5', j.dir === 'back' ? 'bg-accent-soft text-accent' : 'bg-warn/10 text-warn')} data-testid="jump-badge">{j.label}</span>}
@@ -75,7 +73,7 @@ export default function Timeline() {
                   <span className={cn('text-sm tabular-nums whitespace-nowrap', !r && 'text-muted')}>{formatTime(s, ctx)}</span>
                 </div>
                 {open === s.id && (
-                  <div className="border-t border-line p-3 flex flex-col gap-3">
+                  <div className="border-t border-line bg-raised px-5 py-4 flex flex-col gap-3">
                     <StoryTimeEditor bk={bk} scene={s} onChange={(story_time) => bk.update('scenes', s.id, { story_time }, { delay: 300 })} />
                     <div><Button size="sm" onClick={() => navigate(`/book/${bookId}?ch=${c.id}&sc=${s.id}`)}>פתח בעורך</Button></div>
                   </div>
@@ -83,22 +81,20 @@ export default function Timeline() {
               </div>
             )
           })}
-        </section>
+        </Panel>
         <aside className="flex flex-col gap-6">
-          <EraEditor bk={bk} />
+          <Panel title="תקופות"><EraEditor bk={bk} /></Panel>
           {curve.length > 2 && (
-            <div>
-              <h3 className="font-semibold mb-1">עקומת הסיפור</h3>
-              <p className="text-xs text-muted mb-2">משמאל לימין: סדר הקריאה. מלמעלה למטה: מתי זה קרה. קו אלכסוני ישר הוא סיפור ליניארי; קפיצה למעלה היא פלאשבק.</p>
-              <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto rounded-xl border border-line bg-surface" role="img" aria-label="עקומת הסיפור">
+            <Panel title="עקומת הסיפור" description="משמאל לימין: סדר הקריאה. מלמעלה למטה: מתי זה קרה. קפיצה למעלה היא פלאשבק.">
+              <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto rounded-lg border border-line bg-raised" role="img" aria-label="עקומת הסיפור">
                 <polyline fill="none" stroke="var(--accent)" strokeWidth="2" points={curve.map((p) => `${W - 20 - (p.i / n) * (W - 40)},${20 + (p.rank / m) * (H - 40)}`).join(' ')} />
                 {curve.map((p) => <circle key={p.i} cx={W - 20 - (p.i / n) * (W - 40)} cy={20 + (p.rank / m) * (H - 40)} r="4" fill="var(--accent)"><title>{p.title}</title></circle>)}
               </svg>
-            </div>
+            </Panel>
           )}
         </aside>
-      </main>
-    </div>
+      </div>
+    </Page>
   )
 }
 
@@ -113,8 +109,7 @@ function EraEditor({ bk }) {
   }
   return (
     <div className="flex flex-col gap-2">
-      <h3 className="font-semibold">תקופות</h3>
-      <p className="text-xs text-muted">תקופות בחיים או בסיפור, למשל: "תיכון 2008–2011", "הצבא", "השנים בתל אביב".</p>
+      <p className="text-[13px] text-muted">תקופות בחיים או בסיפור, למשל: "תיכון 2008–2011", "הצבא", "השנים בתל אביב".</p>
       {bk.eras.map((e) => (
         <div key={e.id} className="flex items-center gap-2 text-sm rounded-lg border border-line px-2 py-1.5">
           <span className="w-3 h-3 rounded-full shrink-0" style={{ background: e.color }} />

@@ -48,7 +48,7 @@ async function waitFor(fn, msg, ms = 5000) {
 async function test(name, opts, fn) {
   if (typeof opts === 'function') { fn = opts; opts = {} }
   if (filter && !name.includes(filter)) return
-  const ctx = await browser.newContext({ viewport: opts.viewport || { width: 1400, height: 900 }, locale: 'he-IL', hasTouch: !!opts.touch, isMobile: !!opts.mobile, acceptDownloads: true })
+  const ctx = await browser.newContext({ viewport: opts.viewport || { width: 1400, height: 900 }, locale: 'he-IL', hasTouch: !!opts.touch, isMobile: !!opts.mobile, acceptDownloads: true, colorScheme: opts.colorScheme || 'light' })
   const page = await ctx.newPage()
   const errors = []
   page.on('pageerror', (e) => errors.push(e.message))
@@ -471,6 +471,33 @@ await test('import by pasting text with "פרק" lines', async (page) => {
   assert(ch.length === 5, 'appended to book')
 })
 
+await test('import from Google Docs: bold lines become chapters, source fonts are dropped', async (page) => {
+  await page.goto(BASE + '/import')
+  const p = (txt, w = 400) => `<p dir="rtl" style="line-height:1.38;margin-top:0pt;margin-bottom:0pt;"><span style="font-size:11pt;font-family:Arial,sans-serif;color:#000000;font-weight:${w};font-style:normal;">${txt}</span></p>`
+  const html = '<meta charset="utf-8"><b style="font-weight:normal;" id="docs-internal-guid-1234">'
+    + p('סוף סוף פיליפינים', 700) + p('איכס.') + p('מנילה נראית כמו אור יהודה שעצרה בזמן. <span style="font-weight:700">ממש</span> כך.') + '<br>'
+    + p('מחר כבר פה, יום מסריח.', 700) + p('אני עדיין ער, לדעתי זה הערב השלישי.') + p('זה התחיל יומיים לפני שעזבתי את הארץ.')
+    + '</b>'
+  await page.evaluate((h) => {
+    const ta = document.querySelector('[data-testid="import-paste"]')
+    const dt = new DataTransfer(); dt.setData('text/html', h); dt.setData('text/plain', 'x')
+    ta.dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true }))
+  }, html)
+  await page.fill('[data-testid="import-paste"]', 'סוף סוף פיליפינים\nאיכס.')
+  await page.getByRole('button', { name: 'המשך' }).click()
+  await page.waitForSelector('[data-testid="import-stats"]')
+  const stats = await page.textContent('[data-testid="import-stats"]')
+  assert(stats.includes('2 פרקים'), stats)
+  const preview = await page.locator('main').innerHTML()
+  assert(!preview.includes('Arial'), 'source font removed')
+  await page.click('[data-testid="import-commit"]')
+  await page.waitForSelector('[data-testid="import-open"]')
+  const ch = (await store(page, 'Chapter')).filter((c) => c.title === 'סוף סוף פיליפינים' || c.title === 'מחר כבר פה, יום מסריח.')
+  assert(ch.length === 2, 'chapters named after the bold lines: ' + ch.map((c) => c.title).join('|'))
+  const sc = (await store(page, 'Scene')).find((s) => s.chapter_id === ch.find((c) => c.title === 'סוף סוף פיליפינים').id)
+  assert(sc.content.includes('<strong>ממש</strong>') && !/style=|Arial/.test(sc.content), 'bold kept, styles dropped: ' + sc.content)
+})
+
 // ---------------------------------------------------------------- Plan, home, timeline
 await test('plan: deadline and hours give a target, infeasible plan shows options', async (page) => {
   await page.goto(BASE + '/book/b1/plan')
@@ -567,6 +594,41 @@ await test('guided tour: first visit, next, skip, ends with Drive', async (page)
   await page.click('[data-testid="tour-next"]')
   await sleep(700)
   assert((await store(page, 'UserSettings'))[0].tour_done === true, 'tour marked done')
+})
+
+await test('existing writers move to one font and the light theme, even on a dark device', { colorScheme: 'dark' }, async (page) => {
+  await page.goto(BASE + '/')
+  await page.waitForSelector('[data-testid="today-card"]')
+  await sleep(600)
+  const u = (await store(page, 'UserSettings'))[0]
+  assert(u.write_font === 'gofan' && u.ui_font === 'gofan' && u.prefs_version === 2, 'migrated: ' + JSON.stringify(u))
+  assert(await page.evaluate(() => document.documentElement.dataset.theme) === 'light', 'light theme on a dark device')
+  const fam = await page.evaluate(() => getComputedStyle(document.body).fontFamily)
+  assert(fam.includes('Gofan'), 'system font is Gofan: ' + fam)
+})
+
+await test('colour theme: pick "שמנת", it stays after reload', async (page) => {
+  await page.goto(BASE + '/settings')
+  await page.click('[data-testid="theme-warm"]')
+  assert(await page.evaluate(() => document.documentElement.dataset.theme) === 'warm', 'applied')
+  await sleep(1200)
+  assert((await store(page, 'UserSettings'))[0].theme === 'warm', 'saved')
+  await page.reload(); await page.waitForSelector('[data-testid="theme-warm"]')
+  assert(await page.evaluate(() => document.documentElement.dataset.theme) === 'warm', 'kept after reload')
+  await page.screenshot({ path: `${OUT}/theme-warm.png` })
+  await page.click('[data-testid="theme-dark"]')
+  assert(await page.evaluate(() => document.documentElement.classList.contains('dark')), 'dark applies')
+})
+
+await test('navigation rail: home, writing, plan, timeline and settings', async (page) => {
+  await openBook(page)
+  assert(await page.locator('[data-testid="rail"]').isVisible(), 'rail visible')
+  await page.click('[data-testid="nav-plan"]'); await page.waitForSelector('[data-testid="plan"]')
+  await page.click('[data-testid="nav-timeline"]'); await page.waitForSelector('[data-testid="timeline"]')
+  await page.click('[data-testid="nav-write"]'); await page.waitForSelector('[data-testid="workspace"]')
+  await page.click('[data-testid="nav-settings"]'); await page.waitForSelector('[data-testid="settings"]')
+  await page.click('[data-testid="nav-home"]'); await page.waitForSelector('[data-testid="today-card"]')
+  assert(!(await page.locator('[data-testid="drive-client-id"]').count()), 'no technical Drive setup anywhere')
 })
 
 // ---------------------------------------------------------------- iPad and phone

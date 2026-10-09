@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { detect, buildStructure, matchChapterLine, detectToc, DEFAULT_RULES, blocksToHtml } from '../../src/lib/importer.js'
+import { detect, buildStructure, matchChapterLine, detectToc, DEFAULT_RULES, blocksToHtml, suggestRules } from '../../src/lib/importer.js'
 
 const P = (text, tag = 'p') => ({ tag, text, html: `<${tag === 'title' ? 'h1' : tag}>${text}</${tag === 'title' ? 'h1' : tag}>`, bold: false })
 
@@ -71,4 +71,15 @@ test('parts with three heading levels', () => {
 
 test('blocksToHtml normalises gershayim and trims empties', () => {
   assert.equal(blocksToHtml([P(''), P('צה"ל'), P('')]), '<p>צה״ל</p>')
+})
+
+test('bold lines that stand alone become chapters when there are no heading styles', () => {
+  const b = (text, bold = false) => ({ tag: 'p', text, html: `<p>${text}</p>`, bold })
+  const blocks = [b('סוף סוף פיליפינים', true), b('איכס.'), b('מנילה נראית כמו אור יהודה.'), b(''), b('מחר כבר פה, יום מסריח.', true), b('אני עדיין ער.')]
+  const rules = suggestRules(blocks)
+  assert.equal(rules.boldLines, true)
+  const { boundaries } = detect(blocks, rules)
+  assert.deepEqual([...boundaries.values()].map((x) => x.title), ['סוף סוף פיליפינים', 'מחר כבר פה, יום מסריח.'])
+  // With real heading styles, bold lines are left alone.
+  assert.equal(suggestRules([{ tag: 'h1', text: 'פרק', html: '', bold: true }, ...blocks]).boldLines, false)
 })

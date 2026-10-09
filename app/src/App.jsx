@@ -6,6 +6,7 @@ import { bindDriveSettings, startDriveLoop } from '@/lib/drive'
 import { useToasts } from '@/lib/toast'
 import { Toasts, Button } from '@/components/ui'
 import Tour from '@/components/Tour'
+import { AppFrame } from '@/components/AppShell'
 import Home from '@/pages/Home'
 import Workspace from '@/pages/Workspace'
 import Reading from '@/pages/Reading'
@@ -33,7 +34,7 @@ function Protected() {
   return (
     <SettingsProvider>
       <DriveBinder />
-      <Outlet />
+      <AppFrame><Outlet /></AppFrame>
       <Tour />
     </SettingsProvider>
   )

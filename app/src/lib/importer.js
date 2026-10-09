@@ -53,6 +53,17 @@ export function detectToc(blocks) {
 }
 
 /** Find boundaries according to the rules. Returns { boundaries: Map(index → boundary), ignored: Set, title }. */
+/**
+ * Pick the rules that fit this document. A document with no heading styles and no "פרק" lines,
+ * but with several bold lines that stand alone, uses those bold lines as chapter titles.
+ */
+export function suggestRules(blocks) {
+  const hasHeadings = blocks.some((b) => /^h[1-3]$/.test(b.tag) && b.text.trim())
+  const hasChapterWords = blocks.some((b) => matchChapterLine(b.text.trim()))
+  const boldLines = blocks.filter((b) => b.bold && b.text.trim() && b.text.trim().length <= 80).length
+  return { ...DEFAULT_RULES, boldLines: !hasHeadings && !hasChapterWords && boldLines >= 2 }
+}
+
 export function detect(blocks, rules = DEFAULT_RULES) {
   const boundaries = new Map()
   const ignored = detectToc(blocks)
@@ -94,8 +105,8 @@ export function detect(blocks, rules = DEFAULT_RULES) {
       boundaries.set(i, { type: 'scene', title: '', consume: false, reason: 'שורות ריקות', confidence: 'medium' })
       return
     }
-    if (rules.boldLines && b.bold && text.length < 60 && !/[.!?,]$/.test(text)) {
-      boundaries.set(i, { type: 'chapter', title: normalizeHebrew(text), consume: true, reason: 'שורה מודגשת', confidence: 'low' })
+    if (rules.boldLines && b.bold && text.length <= 80 && !/[,:;]$/.test(text)) {
+      boundaries.set(i, { type: 'chapter', title: normalizeHebrew(text), consume: true, reason: 'שורה מודגשת', confidence: 'medium' })
     }
   })
   return { boundaries, ignored, title }

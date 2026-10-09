@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
-import { ArrowRight, AlertTriangle, CheckCircle2, X } from 'lucide-react'
+import { useParams } from 'react-router-dom'
+import { AlertTriangle, CheckCircle2, X } from 'lucide-react'
 import { useBook, chapterLabel } from '@/hooks/useBook'
 import { usePlanToday } from '@/hooks/usePlanToday'
 import { useSettings } from '@/lib/settings'
 import { WEEKDAYS, DEFAULT_WEEKLY, DEFAULT_WPH, chapterDueDates, dateKey, parseKey } from '@/lib/planning'
+import { Page, Panel } from '@/components/AppShell'
 import { Button, inputClass } from '@/components/ui'
 import { formatNumber } from '@/lib/text'
 import { cn } from '@/lib/utils'
@@ -27,14 +28,10 @@ export default function Plan() {
 
   const weeklyMinutes = weekly.reduce((a, b) => a + b, 0)
   return (
-    <div className="h-full overflow-y-auto">
-      <header className="h-14 flex items-center gap-2 px-4 border-b border-line bg-surface">
-        <Link to={`/book/${bookId}`} className="hit inline-flex items-center gap-1 rounded-lg px-2 hover:bg-sunk"><ArrowRight size={17} />לספר</Link>
-        <span className="font-semibold">תכנון זמנים: {bk.book.title}</span>
-      </header>
-      <main className="max-w-4xl mx-auto px-4 py-6 grid gap-6 lg:grid-cols-2">
-        <section className="flex flex-col gap-4">
-          <h2 className="text-lg font-semibold">מה המטרה</h2>
+    <Page eyebrow={bk.book.title} title="תכנון זמנים" subtitle="תאריך סיום, הזמן שיש לך בכל שבוע, ומכתוב מחשב אם זה אפשרי ומה היעד היומי." testid="plan">
+      <div className="grid gap-6 lg:grid-cols-2 items-start">
+      <div className="flex flex-col gap-6">
+        <Panel title="המטרה" bodyClass="p-5 flex flex-col gap-4">
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="text-muted">תאריך סיום</span>
             <input type="date" className={inputClass} value={plan.deadline || ''} min={dateKey(new Date())} onChange={(e) => set({ deadline: e.target.value })} data-testid="plan-deadline" />
@@ -43,7 +40,8 @@ export default function Plan() {
             <span className="text-muted">כמה מילים בספר, בערך (כרגע: {formatNumber(r.written)})</span>
             <input type="number" min={0} step={1000} className={inputClass} value={plan.target_words || ''} onChange={(e) => set({ target_words: +e.target.value || 0 })} placeholder="למשל 80000" data-testid="plan-target" />
           </label>
-          <h2 className="text-lg font-semibold mt-2">כמה זמן יש לך</h2>
+        </Panel>
+        <Panel title="כמה זמן יש לך" description="דקות כתיבה בכל יום בשבוע." bodyClass="p-5 flex flex-col gap-4">
           <div className="grid grid-cols-7 gap-1.5 text-center text-xs">
             {WEEKDAYS.map((d, i) => (
               <label key={d} className="flex flex-col gap-1">
@@ -79,16 +77,17 @@ export default function Plan() {
             <input type="number" className={inputClass} value={settings.words_per_hour || ''} placeholder={r.measured ? `נמדד: ${r.measured}` : `ברירת מחדל: ${DEFAULT_WPH}`} onChange={(e) => updateSettings({ words_per_hour: +e.target.value || null })} />
             <span className="text-xs text-muted">{r.measured ? `לפי הכתיבה שלך בשבועיים האחרונים: כ־${r.measured} מילים בשעה. מכתוב משתמש במספר הזה אם לא הזנת אחר.` : 'אחרי כמה ימי כתיבה מכתוב ימדוד את הקצב האמיתי שלך ויעדכן לבד.'}</span>
           </label>
-        </section>
+        </Panel>
+      </div>
 
-        <section className="flex flex-col gap-4">
-          <h2 className="text-lg font-semibold">התשובה</h2>
+      <div className="flex flex-col gap-6">
+        <Panel title="התשובה" bodyClass="p-5 flex flex-col gap-4">
           {!r.hasPlan ? (
             <p className="text-muted">קבעו תאריך סיום והיקף, ומכתוב יחשב אם זה אפשרי ומה היעד היומי.</p>
           ) : (
             <>
-              <div className={cn('rounded-2xl border p-4', r.feasible ? 'border-ok/40 bg-ok/5' : 'border-warn/40 bg-warn/5')} data-testid="plan-verdict">
-                <div className="flex items-center gap-2 font-semibold mb-1">
+              <div className={cn('rounded-xl border p-4', r.feasible ? 'border-ok/40 bg-ok/5' : 'border-warn/40 bg-warn/5')} data-testid="plan-verdict">
+                <div className="flex items-center gap-2 font-black mb-1">
                   {r.feasible ? <CheckCircle2 size={18} className="text-ok" /> : <AlertTriangle size={18} className="text-warn" />}
                   {r.feasible ? 'זה אפשרי.' : 'בזמן שהגדרת זה לא ייגמר בתאריך.'}
                 </div>
@@ -112,13 +111,16 @@ export default function Plan() {
                   </div>
                 )}
               </div>
-              <div className="rounded-2xl border border-line bg-surface p-4">
+              <div className="rounded-xl border border-line bg-raised p-4">
                 <div className="text-sm text-muted">היעד של היום</div>
-                <div className="text-3xl font-semibold tabular-nums">{r.todayMinutes ? formatNumber(r.todayTarget) : 'יום חופש'}</div>
+                <div className="text-3xl font-black tabular-nums">{r.todayMinutes ? formatNumber(r.todayTarget) : 'יום חופש'}</div>
                 {r.todayMinutes > 0 && <div className="text-sm text-muted">בערך {r.todayMinutes} דקות. היעד ננעל בבוקר ומחושב מחדש מחר, כך שפספוס או עודף מתפזרים על הימים שנשארו.</div>}
               </div>
-              <div>
-                <h3 className="font-semibold mb-2">הפרקים על לוח השנה</h3>
+            </>
+          )}
+        </Panel>
+        {r.hasPlan && (
+              <Panel title="הפרקים על לוח השנה" description="פרק עם דדליין קבוע נשאר במקום, והשאר מסתדרים סביבו." bodyClass="p-2">
                 <div className="flex flex-col gap-1 text-sm">
                   {bk.flatChapters.filter((c) => !c.unused).map((c) => {
                     const d = due[c.id]
@@ -132,12 +134,10 @@ export default function Plan() {
                     )
                   })}
                 </div>
-                <p className="text-xs text-muted mt-2">פרק עם דדליין קבוע נשאר במקום, והשאר מסתדרים סביבו.</p>
-              </div>
-            </>
-          )}
-        </section>
-      </main>
-    </div>
+              </Panel>
+        )}
+      </div>
+      </div>
+    </Page>
   )
 }

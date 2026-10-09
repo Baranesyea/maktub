@@ -2,45 +2,101 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Maktub design tokens. Light is the default; .dark on <html> switches the palette. */
-:root {
-  --bg: #f5f6f8;
+/* Maktub design tokens. Four colour themes, chosen in settings and remembered.
+   data-theme on <html> picks one; "dark" also sets the .dark class. */
+:root, [data-theme="light"] {
+  --bg: #f3f4f6;
   --surface: #ffffff;
-  --sunk: #eef0f3;
-  --fg: #1c2230;
-  --muted: #5f6878;
-  --line: #dfe3ea;
-  --accent: #2f4fa8;
-  --accent-soft: #e7ecf8;
-  --warn: #b45309;
-  --ok: #15803d;
-  --danger: #b91c1c;
-  --note-fix: #e8b931;
+  --sunk: #f0f1f4;
+  --raised: #fafbfc;
+  --fg: #15171c;
+  --muted: #5e6471;
+  --faint: #8a909c;
+  --line: #e3e5ea;
+  --line-strong: #cfd3da;
+  --accent: #1f2b4d;
+  --accent-fg: #ffffff;
+  --accent-soft: #e9ecf3;
+  --link: #2c4a9a;
+  --rail-bg: #0f1013;
+  --rail-fg: #9a9fab;
+  --rail-hover: rgba(255, 255, 255, 0.06);
+  --rail-active: rgba(255, 255, 255, 0.1);
+  --warn: #a5560b;
+  --ok: #17803d;
+  --danger: #b42318;
+  --note-fix: #e2b12a;
   --note-check: #4f83e6;
   --note-idea: #34a061;
   --note-question: #9466d4;
   --anchor-bg: rgba(232, 185, 49, 0.22);
-  --ui-font: 'Assistant', system-ui, sans-serif;
-  --write-font: 'Frank Ruhl Libre', serif;
+  --ui-font: 'Fb Gofan Sans', 'Assistant', system-ui, sans-serif;
+  --write-font: 'Fb Gofan Sans', 'Assistant', system-ui, sans-serif;
   --write-size: 19px;
   --read-size: 22px;
-  --shadow: 0 1px 2px rgba(20, 24, 35, 0.06), 0 4px 16px rgba(20, 24, 35, 0.06);
+  --shadow: 0 1px 2px rgba(16, 18, 24, 0.05), 0 6px 20px rgba(16, 18, 24, 0.06);
+  --shadow-sm: 0 1px 2px rgba(16, 18, 24, 0.06);
   color-scheme: light;
 }
-.dark {
-  --bg: #13161c;
-  --surface: #1a1e26;
-  --sunk: #161920;
-  --fg: #e6e9ef;
-  --muted: #9aa3b3;
-  --line: #2c323d;
-  --accent: #8fa9f2;
-  --accent-soft: #222b3f;
-  --warn: #f59e0b;
+[data-theme="warm"] {
+  --bg: #f4efe4;
+  --surface: #fffcf5;
+  --sunk: #f1eadb;
+  --raised: #fbf6ec;
+  --fg: #26211a;
+  --muted: #6a6152;
+  --faint: #978d7c;
+  --line: #e6dcc8;
+  --line-strong: #d6c9b0;
+  --accent: #2f2a22;
+  --accent-fg: #fffcf5;
+  --accent-soft: #efe6d4;
+  --link: #7a4f12;
+  --rail-bg: #1d1a15;
+  --rail-fg: #a89f8f;
+  --shadow: 0 1px 2px rgba(60, 45, 20, 0.06), 0 6px 20px rgba(60, 45, 20, 0.07);
+  --shadow-sm: 0 1px 2px rgba(60, 45, 20, 0.08);
+  --anchor-bg: rgba(226, 177, 42, 0.25);
+}
+[data-theme="gray"] {
+  --bg: #e6e8eb;
+  --surface: #f6f7f8;
+  --sunk: #e9ebee;
+  --raised: #eff1f3;
+  --fg: #181b20;
+  --muted: #565d69;
+  --faint: #838a96;
+  --line: #d4d8de;
+  --line-strong: #c0c5cd;
+  --accent: #1d2533;
+  --accent-fg: #ffffff;
+  --accent-soft: #dde1e8;
+  --link: #2f4a85;
+  --rail-bg: #16191e;
+  --rail-fg: #9aa0ab;
+}
+[data-theme="dark"], .dark {
+  --bg: #121418;
+  --surface: #1a1d23;
+  --sunk: #16181d;
+  --raised: #1e2128;
+  --fg: #e7e9ee;
+  --muted: #9ba2af;
+  --faint: #737a87;
+  --line: #2a2e37;
+  --line-strong: #3a3f4a;
+  --accent: #e7e9ee;
+  --accent-fg: #121418;
+  --accent-soft: #262a33;
+  --link: #9db4f0;
+  --rail-bg: #0b0c0f;
+  --rail-fg: #8b919c;
+  --warn: #f0a33c;
   --ok: #4ade80;
   --danger: #f87171;
   --anchor-bg: rgba(232, 185, 49, 0.18);
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 16px rgba(0, 0, 0, 0.3);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 6px 20px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
   color-scheme: dark;
 }
 
@@ -52,6 +108,8 @@ body {
   font-family: var(--ui-font);
   font-size: 15px;
   line-height: 1.5;
+  font-weight: 500;
+  font-feature-settings: 'tnum' 0;
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
 }
@@ -65,6 +123,7 @@ button { -webkit-user-select: none; user-select: none; }
 /* ---------- Writing surface ---------- */
 .prose-write {
   font-family: var(--write-font);
+  font-weight: var(--write-weight, 300);
   font-size: var(--write-size);
   line-height: 1.85;
   color: var(--fg);
@@ -80,7 +139,8 @@ button { -webkit-user-select: none; user-select: none; }
   height: 0;
   pointer-events: none;
 }
-.prose-write h1, .prose-write h2, .prose-write h3 { font-weight: 600; margin: 1.2em 0 0.6em; line-height: 1.35; }
+.prose-write strong, .prose-write b { font-weight: 900; }
+.prose-write h1, .prose-write h2, .prose-write h3 { font-weight: 900; margin: 1.2em 0 0.6em; line-height: 1.35; }
 .prose-write h2 { font-size: 1.25em; }
 .prose-write h3 { font-size: 1.1em; }
 .prose-write blockquote { border-inline-start: 3px solid var(--line); padding-inline-start: 1em; color: var(--muted); margin: 0 0 1em; }
@@ -106,7 +166,7 @@ button { -webkit-user-select: none; user-select: none; }
 .reading.theme-paper { --rbg: #f3eee3; --rfg: #2b2620; }
 .reading.theme-dark { --rbg: #15171b; --rfg: #dfe2e8; }
 .reading.theme-light { --rbg: #ffffff; --rfg: #1c2230; }
-.reading article { font-family: var(--write-font); font-size: var(--read-size); line-height: 1.9; max-width: 64ch; margin-inline: auto; }
+.reading article { font-family: var(--write-font); font-weight: var(--write-weight, 300); font-size: var(--read-size); line-height: 1.9; max-width: 64ch; margin-inline: auto; }
 .reading article p { margin: 0 0 0.9em; }
 .reading article p + p { text-indent: 1.4em; }
 .reading article hr { border: none; text-align: center; margin: 1.6em 0; height: 1.4em; }

@@ -50,6 +50,8 @@
     "drive": {
       "type": "object"
     },
+    "prefs_version": { "type": "number" },
+    "write_weight": { "type": "number" },
     "words_per_hour": {
       "type": "number"
     }

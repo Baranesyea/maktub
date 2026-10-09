@@ -119,7 +119,7 @@ export default function NotesPanel({ bk, chapterId, sceneId, activeNoteId, onJum
                   onClick={(e) => e.stopPropagation()}
                   onChange={(e) => bk.update('notes', n.id, { text: e.target.value }, { delay: 800 })}
                   className="w-full resize-none bg-transparent outline-none text-[14px] leading-6"
-                  style={{ fontFamily: "'Fb Mockup', var(--ui-font)" }}
+                  
                   aria-label="תוכן הפתק"
                 />
                 <div className="flex items-center gap-1 mt-1" onClick={(e) => e.stopPropagation()}>

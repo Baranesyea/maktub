@@ -40,7 +40,11 @@ export function markBookDirty(bookId) {
 export function bindDriveSettings(get, update) { settingsRef = { get, update } }
 
 const driveSettings = () => settingsRef.get()?.drive || null
-export const clientId = () => driveSettings()?.client_id || import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
+// Maktub's own Google sign-in key. It is set once for the whole app, so a writer only clicks
+// "connect" and approves in Google's window. It is a public identifier, not a secret.
+export const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
+export const clientId = () => GOOGLE_CLIENT_ID
+export const driveAvailable = () => !!GOOGLE_CLIENT_ID
 export const isConnected = () => !!driveSettings()?.connected
 
 function setStatus(bookId, s) { statusByBook[bookId] = { ...(statusByBook[bookId] || {}), ...s }; emit() }
@@ -68,7 +72,7 @@ function loadGis() {
 /** Ask Google for access. Must be called from a click. */
 export async function connectDrive({ prompt = 'consent' } = {}) {
   const cid = clientId()
-  if (!cid) throw new Error('חסר מזהה לקוח של גוגל. ראו הוראות בהגדרות.')
+  if (!cid) throw new Error('החיבור לגוגל דרייב עוד לא הופעל במכתוב.')
   await loadGis()
   const resp = await new Promise((resolve, reject) => {
     const client = window.google.accounts.oauth2.initTokenClient({
@@ -83,7 +87,7 @@ export async function connectDrive({ prompt = 'consent' } = {}) {
   token = { value: resp.access_token, exp: Date.now() + (resp.expires_in || 3600) * 1000 }
   sessionStorage.setItem(TOKEN_KEY, JSON.stringify(token))
   const cur = driveSettings() || {}
-  settingsRef.update({ drive: { ...cur, client_id: cid, connected: true, connected_at: cur.connected_at || new Date().toISOString() } })
+  settingsRef.update({ drive: { ...cur, connected: true, connected_at: cur.connected_at || new Date().toISOString() } })
   emit()
   startDriveLoop()
   setTimeout(() => tick(true), 500)

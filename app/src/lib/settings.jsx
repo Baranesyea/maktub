@@ -7,9 +7,11 @@ const DEFAULTS = {
   ui_font: DEFAULT_UI_FONT,
   write_font: DEFAULT_WRITE_FONT,
   write_size: 19,
+  write_weight: 300,
   read_size: 22,
   ipad_size: 17,
-  theme: 'system',
+  theme: 'light',
+  prefs_version: 2,
   reading_theme: 'paper',
   typewriter: true,
   paragraph_style: 'indent',
@@ -21,6 +23,13 @@ const DEFAULTS = {
   words_per_hour: null,
 }
 
+export const THEMES = [
+  { id: 'light', name: 'בהיר', swatch: ['#ffffff', '#f3f4f6', '#1f2b4d'] },
+  { id: 'warm', name: 'שמנת', swatch: ['#fffcf5', '#f4efe4', '#2f2a22'] },
+  { id: 'gray', name: 'אפור', swatch: ['#f6f7f8', '#e6e8eb', '#1d2533'] },
+  { id: 'dark', name: 'כהה', swatch: ['#1a1d23', '#121418', '#e7e9ee'] },
+]
+
 const LOCAL_KEY = 'maktub_settings_cache'
 const SettingsContext = createContext(null)
 
@@ -29,9 +38,12 @@ function applyToDocument(s) {
   root.style.setProperty('--ui-font', fontById(s.ui_font).css)
   root.style.setProperty('--write-font', fontById(s.write_font).css)
   root.style.setProperty('--write-size', `${s.write_size}px`)
+  root.style.setProperty('--write-weight', String(s.write_weight || 300))
   root.style.setProperty('--read-size', `${s.read_size}px`)
-  const dark = s.theme === 'dark' || (s.theme === 'system' && window.matchMedia?.('(prefers-color-scheme: dark)').matches)
-  root.classList.toggle('dark', !!dark)
+  const theme = THEMES.some((t) => t.id === s.theme) ? s.theme : 'light'
+  root.dataset.theme = theme
+  root.classList.toggle('dark', theme === 'dark')
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', getComputedStyle(root).getPropertyValue('--bg').trim() || '#f3f4f6')
 }
 
 export function SettingsProvider({ children }) {
@@ -42,12 +54,6 @@ export function SettingsProvider({ children }) {
   const recordId = useRef(null)
 
   useEffect(() => { applyToDocument(settings) }, [settings])
-  useEffect(() => {
-    const mq = window.matchMedia?.('(prefers-color-scheme: dark)')
-    const fn = () => applyToDocument(settings)
-    mq?.addEventListener?.('change', fn)
-    return () => mq?.removeEventListener?.('change', fn)
-  }, [settings])
 
   useEffect(() => {
     let alive = true
@@ -58,7 +64,14 @@ export function SettingsProvider({ children }) {
         if (!rec) rec = await db.UserSettings.create({ ...DEFAULTS })
         recordId.current = rec.id
         if (alive) {
-          const merged = { ...DEFAULTS, ...rec }
+          let merged = { ...DEFAULTS, ...rec }
+          // Version 2: one font (גופן סאנס) for the system and the writing, and the light theme
+          // unless the writer picked another one. Earlier versions defaulted to a serif and to the device theme.
+          if ((rec.prefs_version || 0) < 2) {
+            const patch = { ui_font: 'gofan', write_font: 'gofan', theme: rec.theme === 'dark' || rec.theme === 'system' || !rec.theme ? 'light' : rec.theme, prefs_version: 2 }
+            merged = { ...merged, ...patch }
+            queueUpdate('UserSettings', rec.id, patch, { delay: 300 })
+          }
           setSettings(merged)
           localStorage.setItem(LOCAL_KEY, JSON.stringify(merged))
         }

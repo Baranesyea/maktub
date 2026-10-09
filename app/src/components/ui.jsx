@@ -7,8 +7,8 @@ import { cn } from '@/lib/utils'
 
 export const Button = forwardRef(function Button({ variant = 'default', size = 'md', className, ...props }, ref) {
   const v = {
-    default: 'bg-surface border border-line text-fg hover:bg-sunk',
-    primary: 'bg-accent text-white border border-transparent hover:opacity-90 dark:text-bg',
+    default: 'bg-surface border border-line-strong/70 text-fg hover:bg-sunk shadow-[var(--shadow-sm)]',
+    primary: 'bg-accent text-accent-fg border border-transparent hover:opacity-90 shadow-[var(--shadow-sm)]',
     ghost: 'bg-transparent border border-transparent text-fg hover:bg-sunk',
     danger: 'bg-surface border border-line text-danger hover:bg-sunk',
   }[variant]

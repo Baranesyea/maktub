@@ -1,8 +1,8 @@
 import { useMemo, useRef, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowRight, FileUp, ClipboardPaste, Scissors, EyeOff, Eye, Undo2, CheckCircle2, AlertTriangle } from 'lucide-react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { FileUp, ClipboardPaste, Scissors, EyeOff, Eye, Undo2, CheckCircle2, AlertTriangle } from 'lucide-react'
 import { db } from '@/api/db'
-import { detect, buildStructure, blocksToHtml, structureStats, textToBlocks, DEFAULT_RULES } from '@/lib/importer'
+import { detect, buildStructure, blocksToHtml, structureStats, textToBlocks, DEFAULT_RULES, suggestRules } from '@/lib/importer'
 import { wordsInHtml, formatNumber } from '@/lib/text'
 import { Button, inputClass } from '@/components/ui'
 import { cn } from '@/lib/utils'
@@ -10,6 +10,27 @@ import { toast } from '@/lib/toast'
 
 const TYPE_LABEL = { part: 'חלק', chapter: 'פרק', scene: 'סצנה' }
 const TYPE_COLOR = { part: 'bg-[#9466d4]', chapter: 'bg-accent', scene: 'bg-[#34a061]' }
+
+// Is a text node bold? The nearest element that says so decides. Google Docs marks bold with
+// font-weight:700 on a span, and wraps the whole paste in <b style="font-weight:normal">.
+function nodeIsBold(node, root) {
+  for (let el = node.parentElement; el && el !== root.parentElement; el = el.parentElement) {
+    const w = el.style?.fontWeight
+    if (w) return w === 'bold' || w === 'bolder' || Number(w) >= 600
+    if (/^(STRONG|B|H[1-6])$/.test(el.tagName)) return true
+  }
+  return false
+}
+function isAllBold(el) {
+  const walker = el.ownerDocument.createTreeWalker(el, NodeFilter.SHOW_TEXT)
+  let any = false
+  for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+    if (!n.nodeValue.trim()) continue
+    if (!nodeIsBold(n, el)) return false
+    any = true
+  }
+  return any
+}
 
 /** HTML (from Word through mammoth, or pasted from Google Docs) → flat blocks. */
 function htmlToBlocks(html) {
@@ -26,9 +47,24 @@ function htmlToBlocks(html) {
     const refs = []
     el.querySelectorAll('a[href^="#footnote"]').forEach((a) => { const id = a.getAttribute('href').slice(1); if (footnotes[id]) refs.push(footnotes[id]); a.closest('sup')?.remove(); a.remove() })
     el.querySelectorAll('[dir]').forEach((x) => x.removeAttribute('dir'))
-    el.removeAttribute?.('style')
     const text = el.textContent || ''
-    const bold = !!text.trim() && [...el.childNodes].every((n) => (n.nodeType === 3 && !n.nodeValue.trim()) || (n.nodeType === 1 && /^(STRONG|B)$/.test(n.tagName)))
+    const bold = isAllBold(el)
+    // Keep bold and italic, drop the source document's fonts, sizes and colours.
+    if (!/^h[1-6]$/.test(tag)) {
+      el.querySelectorAll('span[style]').forEach((sp) => {
+        const w = sp.style.fontWeight
+        const b = w === 'bold' || Number(w) >= 600
+        const i = sp.style.fontStyle === 'italic'
+        if (!b && !i) return
+        let inner = sp.innerHTML
+        if (i) inner = `<em>${inner}</em>`
+        if (b && !bold) inner = `<strong>${inner}</strong>`
+        sp.innerHTML = inner
+      })
+    }
+    el.removeAttribute?.('style')
+    el.querySelectorAll('[style]').forEach((x) => x.removeAttribute('style'))
+    el.querySelectorAll('span').forEach((sp) => sp.replaceWith(...sp.childNodes))
     const html = tag === 'title' ? `<p>${el.innerHTML}</p>` : /^h[1-6]$/.test(tag) ? `<h2>${el.innerHTML}</h2>` : el.outerHTML.replace(/^<(\w+)[^>]*>/, `<${el.tagName.toLowerCase()}>`)
     blocks.push({ tag, text, html: html.replace(/<br>$/, ''), bold, footnotes: refs })
   }
@@ -82,7 +118,9 @@ export default function ImportPage() {
   const fileName = useRef('')
 
   const load = (list, rep, fname) => {
-    const d = detect(list, rules)
+    const r = suggestRules(list)
+    setRules(r)
+    const d = detect(list, r)
     setBlocks(list); setReport(rep); setBoundaries(d.boundaries); setIgnored(d.ignored)
     setTitle(d.title || fname || '')
     setStage('preview')
@@ -170,24 +208,40 @@ export default function ImportPage() {
 
   return (
     <div className="h-full flex flex-col">
-      <header className="h-14 shrink-0 flex items-center gap-2 px-4 border-b border-line bg-surface">
-        <Link to={bookId ? `/book/${bookId}` : '/'} className="hit inline-flex items-center gap-1 rounded-lg px-2 hover:bg-sunk"><ArrowRight size={17} />חזרה</Link>
-        <span className="font-semibold">{bookId ? 'ייבוא לתוך הספר' : 'ייבוא ספר קיים'}</span>
+      <header className="shrink-0 border-b border-line bg-surface">
+        <div className="px-5 sm:px-8 py-5 flex flex-wrap items-end gap-x-6 gap-y-3">
+          <div className="flex-1 min-w-[220px]">
+            <h1 className="text-[26px] leading-tight font-black tracking-tight">{bookId ? 'ייבוא לתוך הספר' : 'ייבוא ספר קיים'}</h1>
+            <p className="text-sm text-muted mt-1">מוורד או מגוגל דוקס. רואים את החלוקה לפרקים לפני שמשהו נשמר.</p>
+          </div>
+          <ol className="flex items-center gap-2 text-[13px]" aria-label="שלבים">
+            {[['pick', 'בחירה'], ['preview', 'בדיקת החלוקה'], ['done', 'סיום']].map(([k, l], i) => {
+              const idx = ['pick', 'preview', 'done'].indexOf(stage)
+              return (
+                <li key={k} className={cn('flex items-center gap-2', i > idx ? 'text-faint' : 'text-fg')}>
+                  {i > 0 && <span className="w-6 h-px bg-line" aria-hidden />}
+                  <span className={cn('w-6 h-6 rounded-full flex items-center justify-center text-[12px] font-black', i < idx ? 'bg-accent text-accent-fg' : i === idx ? 'border-2 border-fg' : 'border border-line')}>{i + 1}</span>
+                  <span className={i === idx ? 'font-black' : ''}>{l}</span>
+                </li>
+              )
+            })}
+          </ol>
+        </div>
       </header>
 
       {stage === 'pick' && (
         <main className="flex-1 overflow-y-auto">
-          <div className="max-w-3xl mx-auto px-4 py-8 grid gap-4 md:grid-cols-2">
-            <label className={cn('rounded-2xl border-2 border-dashed border-line bg-surface p-6 flex flex-col items-center justify-center gap-3 text-center cursor-pointer hover:border-accent', busy && 'opacity-60')}
+          <div className="max-w-[1000px] mx-auto px-5 sm:px-8 py-8 grid gap-5 md:grid-cols-2">
+            <label className={cn('rounded-xl border-2 border-dashed border-line-strong bg-surface p-8 flex flex-col items-center justify-center gap-3 text-center cursor-pointer hover:border-fg', busy && 'opacity-60')}
               onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); onFile(e.dataTransfer.files[0]) }}>
-              <FileUp size={32} className="text-accent" />
-              <div className="font-semibold">קובץ וורד</div>
+              <FileUp size={32} />
+              <div className="font-black">קובץ וורד</div>
               <div className="text-sm text-muted">גוררים לכאן או לוחצים לבחירה. מגוגל דוקס: קובץ ← הורדה ← Microsoft Word.</div>
               <input type="file" accept=".docx" className="sr-only" onChange={(e) => onFile(e.target.files[0])} data-testid="import-file" />
               {busy && <div className="text-sm">קורא את הקובץ…</div>}
             </label>
-            <div className="rounded-2xl border border-line bg-surface p-6 flex flex-col gap-3">
-              <div className="flex items-center gap-2 font-semibold"><ClipboardPaste size={20} className="text-accent" />הדבקה</div>
+            <div className="rounded-xl border border-line bg-surface shadow-[var(--shadow-sm)] p-6 flex flex-col gap-3">
+              <div className="flex items-center gap-2 font-black"><ClipboardPaste size={20} />הדבקה מגוגל דוקס</div>
               <div className="text-sm text-muted">מעתיקים מגוגל דוקס ומדביקים כאן. הכותרות נשמרות.</div>
               <textarea className={cn(inputClass, 'h-40 py-2')} value={pasteText} onChange={(e) => { setPasteText(e.target.value); if (!e.target.value) pastedHtml.current = null }}
                 onPaste={(e) => { const h = e.clipboardData.getData('text/html'); pastedHtml.current = h || null }} placeholder="הדביקו כאן" data-testid="import-paste" />
@@ -199,7 +253,7 @@ export default function ImportPage() {
 
       {stage === 'preview' && (
         <main className="flex-1 min-h-0 flex flex-col lg:flex-row">
-          <aside className="lg:w-80 shrink-0 border-b lg:border-b-0 lg:border-e border-line bg-sunk overflow-y-auto p-4 flex flex-col gap-4">
+          <aside className="lg:w-80 shrink-0 border-b lg:border-b-0 lg:border-e border-line bg-surface overflow-y-auto p-4 flex flex-col gap-4">
             <div className="rounded-xl bg-surface border border-line p-3 text-sm" data-testid="import-stats">
               <div className="font-semibold mb-1">זוהו {stats.chapters} פרקים ו־{stats.scenes} סצנות{stats.parts ? `, ב־${stats.parts} חלקים` : ''}</div>
               <div className="text-muted">{formatNumber(totalWords)} מילים · עוד שום דבר לא נשמר</div>
@@ -209,7 +263,7 @@ export default function ImportPage() {
             )}
             <div className="flex flex-col gap-1.5 text-sm">
               <div className="font-semibold">איך לזהות את החלוקה</div>
-              {[['headings', 'סגנונות כותרת (כותרת 1, 2, 3)'], ['chapterWords', 'שורות כמו "פרק א׳", "פרק 3", "פרק ראשון"'], ['separators', 'מפרידי סצנה: * * *, #, §'], ['blankLines', 'שתי שורות ריקות או יותר = סצנה חדשה'], ['boldLines', 'שורה קצרה מודגשת = פרק (פחות בטוח)']].map(([k, l]) => (
+              {[['headings', 'סגנונות כותרת (כותרת 1, 2, 3)'], ['chapterWords', 'שורות כמו "פרק א׳", "פרק 3", "פרק ראשון"'], ['separators', 'מפרידי סצנה: * * *, #, §'], ['blankLines', 'שתי שורות ריקות או יותר = סצנה חדשה'], ['boldLines', 'שורה מודגשת שעומדת לבד = פרק']].map(([k, l]) => (
                 <label key={k} className="flex items-start gap-2"><input type="checkbox" className="mt-1" checked={rules[k]} onChange={(e) => rerun({ ...rules, [k]: e.target.checked })} />{l}</label>
               ))}
             </div>
@@ -261,7 +315,7 @@ export default function ImportPage() {
                     )}
                     {!(bd?.consume) && (
                       <div className={cn('relative flex items-start gap-2 rounded-lg px-2 py-1 hover:bg-sunk', ign && 'opacity-40 line-through')}>
-                        <div className="flex-1 min-w-0 text-[15px] leading-7 font-write line-clamp-3">{b.text}</div>
+                        <div className="flex-1 min-w-0 text-[15px] leading-7 line-clamp-3">{b.text}</div>
                         <div className="opacity-0 group-hover:opacity-100 focus-within:opacity-100 flex gap-1 shrink-0">
                           {!bd && <button className="h-7 px-2 rounded-md border border-line bg-surface text-xs inline-flex items-center gap-1" onClick={() => setB(i, { type: 'chapter', title: '', consume: false, reason: 'פיצול ידני', confidence: 'high' })}><Scissors size={12} />פרק חדש כאן</button>}
                           {!bd && <button className="h-7 px-2 rounded-md border border-line bg-surface text-xs inline-flex items-center gap-1" onClick={() => setB(i, { type: 'scene', title: '', consume: false, reason: 'פיצול ידני', confidence: 'high' })}><Scissors size={12} />סצנה חדשה כאן</button>}
