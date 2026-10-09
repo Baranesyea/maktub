@@ -1,0 +1,6 @@
+node_modules
+dist
+*.local.css
+tests/e2e/artifacts
+.env*.local
+tests/debug
