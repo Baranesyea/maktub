@@ -13,7 +13,7 @@ export const Button = forwardRef(function Button({ variant = 'default', size = '
     danger: 'bg-surface border border-line text-danger hover:bg-sunk',
   }[variant]
   const s = { sm: 'h-8 px-2.5 text-sm', md: 'h-10 px-3.5 text-[15px]', lg: 'h-12 px-5 text-base' }[size]
-  return <button ref={ref} className={cn('inline-flex items-center justify-center gap-1.5 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:pointer-events-none', v, s, className)} {...props} />
+  return <button ref={ref} className={cn('inline-flex items-center justify-center gap-1.5 rounded-lg transition-colors disabled:opacity-50 disabled:pointer-events-none', v, s, className)} {...props} />
 })
 
 export const IconButton = forwardRef(function IconButton({ label, className, active, ...props }, ref) {

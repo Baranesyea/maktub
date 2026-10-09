@@ -3,8 +3,9 @@ import { useEffect, useState } from 'react'
 /** Width-based layout mode. The layout follows the window width, not the device type. */
 export function useLayoutMode() {
   const get = () => {
-    const w = window.innerWidth
-    return w >= 1180 ? 'wide' : w >= 760 ? 'medium' : 'narrow'
+    // The navigation rail takes 80px on screens from 640px up; count only the room the editor gets.
+    const w = window.innerWidth - (window.innerWidth >= 640 ? 80 : 0)
+    return w >= 1080 ? 'wide' : w >= 700 ? 'medium' : 'narrow'
   }
   const [mode, setMode] = useState(get)
   useEffect(() => {
@@ -63,4 +64,16 @@ export function keepCaretInView(editor, scroller, { ratio = 0.42, visibleTop = 0
     const delta = coords.top - targetY
     if (Math.abs(delta) > 8) scroller.scrollTop += delta
   } catch { /* position not rendered yet */ }
+}
+
+/** Width of an element, kept up to date. */
+export function useWidth(ref) {
+  const [w, setW] = useState(0)
+  useEffect(() => {
+    if (!ref.current) return
+    const ro = new ResizeObserver(([e]) => setW(e.contentRect.width))
+    ro.observe(ref.current)
+    return () => ro.disconnect()
+  }, [ref])
+  return w
 }

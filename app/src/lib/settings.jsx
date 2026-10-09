@@ -8,6 +8,7 @@ const DEFAULTS = {
   write_font: DEFAULT_WRITE_FONT,
   write_size: 19,
   write_weight: 300,
+  ui_weight: 300,
   read_size: 22,
   ipad_size: 17,
   theme: 'light',
@@ -39,6 +40,7 @@ function applyToDocument(s) {
   root.style.setProperty('--write-font', fontById(s.write_font).css)
   root.style.setProperty('--write-size', `${s.write_size}px`)
   root.style.setProperty('--write-weight', String(s.write_weight || 300))
+  root.style.setProperty('--ui-weight', String(s.ui_weight || 300))
   root.style.setProperty('--read-size', `${s.read_size}px`)
   const theme = THEMES.some((t) => t.id === s.theme) ? s.theme : 'light'
   root.dataset.theme = theme

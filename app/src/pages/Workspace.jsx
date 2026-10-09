@@ -332,33 +332,33 @@ export default function Workspace() {
           <button className={cn('h-8 px-2.5 rounded-md text-sm inline-flex items-center gap-1', view === 'write' ? 'bg-surface shadow-sm' : 'text-muted')} onClick={() => setView('write')}><FileText size={15} />כתיבה</button>
           <button className={cn('h-8 px-2.5 rounded-md text-sm inline-flex items-center gap-1', view === 'board' ? 'bg-surface shadow-sm' : 'text-muted')} onClick={() => setView('board')} data-testid="view-board"><LayoutGrid size={15} />כרטיסים</button>
         </div>
-        <div className="flex-1 min-w-0 flex items-center justify-center">
-          {view === 'write' && !focusMode && layout !== 'narrow' && <FormatBar editor={activeEditor} onAddNote={addNote} onSplit={splitHere} className="hidden lg:inline-flex" />}
-        </div>
+        <div className="flex-1" />
         <div className="flex items-center rounded-lg border border-line bg-raised h-10 px-0.5 gap-0.5 min-w-0">
-          <Link to="/" className="hit hidden md:inline-flex items-center gap-1 rounded-md px-2 text-sm text-muted hover:bg-sunk tabular-nums whitespace-nowrap" title="היעד של היום" data-testid="today-pill">
+          {layout === 'wide' && <Link to="/" className="hit inline-flex items-center gap-1 rounded-md px-2 text-sm text-muted hover:bg-sunk tabular-nums whitespace-nowrap" title="היעד של היום" data-testid="today-pill">
             היום {formatNumber(today.words)}{plan.todayTarget ? ` / ${formatNumber(plan.todayTarget)}` : ''}
             {plan.todayTarget > 0 && today.words >= plan.todayTarget && <Check size={14} className="text-ok" />}
-          </Link>
-          <span className="hidden md:block w-px h-5 bg-line" aria-hidden />
+          </Link>}
+          {layout === 'wide' && <span className="w-px h-5 bg-line" aria-hidden />}
           <span className="px-1.5"><SaveStatus compact={layout !== 'wide'} /></span>
           {layout !== 'narrow' && <span className="w-px h-5 bg-line" aria-hidden />}
           {layout !== 'narrow' && <DriveBadge state={drive} onClick={() => navigate('/settings#drive')} />}
         </div>
         <span className="w-1" />
-        {layout !== 'narrow' && <TextSizeControl value={size} onChange={setSize} />}
-        {layout !== 'narrow' && <SprintButton />}
+        {layout === 'wide' && <TextSizeControl value={size} onChange={setSize} />}
+        {layout === 'wide' && <SprintButton />}
         {layout !== 'narrow' && <IconButton label={focusMode ? 'צא ממצב ריכוז (Esc)' : 'מצב ריכוז'} onClick={() => setFocusMode((x) => !x)} active={focusMode} data-testid="focus-toggle" data-tour="focus">{focusMode ? <Minimize2 size={18} /> : <Maximize2 size={18} />}</IconButton>}
-        <IconButton label="מצב קריאה" onClick={() => navigate(`/book/${bookId}/read${chapterId ? `?ch=${chapterId}` : ''}`)} data-testid="reading-toggle" data-tour="reading"><BookOpen size={18} /></IconButton>
+        {layout === 'wide' && <IconButton label="מצב קריאה" onClick={() => navigate(`/book/${bookId}/read${chapterId ? `?ch=${chapterId}` : ''}`)} data-testid="reading-toggle" data-tour="reading"><BookOpen size={18} /></IconButton>}
         {!focusMode && <IconButton label="חלונית צד" onClick={() => setSideOpen((x) => !x)} active={sideOpen} data-testid="toggle-side"><PanelLeft size={18} /></IconButton>}
         <Menu trigger={<IconButton label="עוד" data-testid="more-menu" data-tour="more"><MoreVertical size={18} /></IconButton>}>
           <MenuItem icon={Home} onSelect={() => navigate('/')}>מסך הבית</MenuItem>
-          {layout === 'narrow' && (
+          {layout !== 'wide' && (
             <>
-              <MenuItem icon={Maximize2} onSelect={() => setFocusMode(true)}>מצב ריכוז</MenuItem>
+              <MenuItem icon={BookOpen} onSelect={() => navigate(`/book/${bookId}/read${chapterId ? `?ch=${chapterId}` : ''}`)}>מצב קריאה</MenuItem>
+              {layout === 'narrow' && <MenuItem icon={Maximize2} onSelect={() => setFocusMode(true)}>מצב ריכוז</MenuItem>}
               <MenuItem onSelect={() => setSize(Math.min(32, size + 1))}>הגדל טקסט ({size})</MenuItem>
               <MenuItem onSelect={() => setSize(Math.max(13, size - 1))}>הקטן טקסט</MenuItem>
-              <MenuItem onSelect={() => navigate('/settings#drive')}>גיבוי לדרייב</MenuItem>
+              {layout === 'narrow' && <MenuItem onSelect={() => navigate('/settings#drive')}>גיבוי לדרייב</MenuItem>}
+              <MenuSeparator />
             </>
           )}
           <MenuItem icon={LayoutGrid} onSelect={() => setView(view === 'board' ? 'write' : 'board')}>{view === 'board' ? 'תצוגת כתיבה' : 'לוח כרטיסים'}</MenuItem>
@@ -401,8 +401,8 @@ export default function Workspace() {
             : chapter
               ? <ChapterView ref={chapterRef} bk={bk} chapter={chapter} activeSceneId={scene?.id} notes={bk.notes} onSceneFocus={onSceneFocus} onEditorReady={onEditorReady} onSceneChange={onSceneChange} onAnchorClick={onAnchorClick} onFirstEdit={onFirstEdit} />
               : <EmptyBook bk={bk} onOpenChapter={openChapter} />}
-          {view === 'write' && layout === 'narrow' && !focusMode && (
-            <div className="chrome h-12 shrink-0 border-t border-line flex items-center justify-center bg-sunk overflow-x-auto">
+          {view === 'write' && !focusMode && (
+            <div className="chrome h-12 shrink-0 border-t border-line flex items-center justify-center bg-raised overflow-x-auto">
               <FormatBar editor={activeEditor} onAddNote={addNote} onSplit={splitHere} />
             </div>
           )}

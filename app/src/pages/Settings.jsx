@@ -71,6 +71,12 @@ export default function SettingsPage() {
             })}
           </div>
         </Row>
+        <Row label="עובי הטקסט בממשק" hint="תפריטים, כפתורים ועץ הספר.">
+          <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="עובי הטקסט בממשק">
+            <Choice checked={(settings.ui_weight || 300) === 300} onClick={() => update({ ui_weight: 300 })} data-testid="ui-weight-light">דק</Choice>
+            <Choice checked={settings.ui_weight === 500} onClick={() => update({ ui_weight: 500 })}>רגיל</Choice>
+          </div>
+        </Row>
         <Row label="עובי הטקסט בעורך" hint="דק נעים לקריאה ארוכה.">
           <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="עובי הטקסט">
             <Choice checked={(settings.write_weight || 300) === 300} onClick={() => update({ write_weight: 300 })}>דק</Choice>

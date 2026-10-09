@@ -52,6 +52,7 @@
     },
     "prefs_version": { "type": "number" },
     "write_weight": { "type": "number" },
+    "ui_weight": { "type": "number" },
     "words_per_hour": {
       "type": "number"
     }
