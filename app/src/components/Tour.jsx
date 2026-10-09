@@ -48,11 +48,18 @@ export default function Tour() {
   const finish = () => { setActive(false); update({ tour_done: true }) }
 
   // Skip steps whose target is not on screen (for example the tree drawer on a phone).
+  // At the very start the book may still be loading from the server: wait for the screen
+  // instead of treating "nothing visible yet" as the end of the tour.
+  const [waitTick, setWaitTick] = useState(0)
   useLayoutEffect(() => {
     if (!active) return
+    if (i === 0 && !document.querySelector('[data-testid="workspace"]')) {
+      if (waitTick < 40) { const t = setTimeout(() => setWaitTick((x) => x + 1), 250); return () => clearTimeout(t) }
+      setActive(false); return
+    }
     let k = i
     while (k < steps.length && !visible(document.querySelector(steps[k].sel))) k++
-    if (k >= steps.length) { finish(); return }
+    if (k >= steps.length) { if (i === 0) { setActive(false); return } finish(); return }
     if (k !== i) { setI(k); return }
     const measure = () => {
       const r = document.querySelector(steps[i].sel)?.getBoundingClientRect()
@@ -61,7 +68,7 @@ export default function Tour() {
     measure()
     window.addEventListener('resize', measure)
     return () => window.removeEventListener('resize', measure)
-  }, [active, i, location.pathname])
+  }, [active, i, location.pathname, waitTick])
 
   useEffect(() => {
     if (!active) return

@@ -679,6 +679,15 @@ await test('navigation rail: home, writing, plan, timeline and settings', async 
   assert(!(await page.locator('[data-testid="drive-client-id"]').count()), 'no technical Drive setup anywhere')
 })
 
+await test('guided tour waits for a slow server before it starts', async (page) => {
+  await page.evaluate(() => { const rows = JSON.parse(localStorage.getItem('maktub_mock_UserSettings')); rows[0].tour_done = false; localStorage.setItem('maktub_mock_UserSettings', JSON.stringify(rows)); localStorage.removeItem('maktub_settings_cache'); localStorage.setItem('maktub_mock_latency', '2500') })
+  await page.goto(BASE + '/book/b1')
+  await page.waitForSelector('[data-testid="tour"]', { timeout: 15000 })
+  assert(await page.locator('[data-testid="workspace"]').count() === 1, 'tour shown over the loaded editor')
+  await page.evaluate(() => localStorage.removeItem('maktub_mock_latency'))
+  assert((await store(page, 'UserSettings'))[0].tour_done !== true, 'not marked done before it was seen')
+})
+
 // ---------------------------------------------------------------- iPad and phone
 await test('iPad landscape: touch layout, tree and editor side by side', { viewport: { width: 1180, height: 820 }, touch: true, mobile: true }, async (page) => {
   await openBook(page)

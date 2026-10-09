@@ -42,7 +42,9 @@ function mockEntity(name) {
   const write = (rows) => localStorage.setItem(key, JSON.stringify(rows))
   const net = async () => {
     if (typeof navigator !== 'undefined' && navigator.onLine === false) throw offlineError()
-    await new Promise((r) => setTimeout(r, 5))
+    // Tests can make the fake server slow, to catch screens that assume instant data.
+    const slow = Number(localStorage.getItem('maktub_mock_latency') || 0)
+    await new Promise((r) => setTimeout(r, 5 + slow))
   }
   const stamp = (data) => {
     const now = new Date().toISOString()
