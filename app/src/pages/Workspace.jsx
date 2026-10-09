@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams, Link } from 'react-router-dom'
-import { Menu as MenuIcon, PanelLeft, Maximize2, Minimize2, BookOpen, Search, MoreVertical, Home, LayoutGrid, FileText, Upload, Download, CalendarClock, Clock, Trash2, Settings, HelpCircle, Check, X, Layers } from 'lucide-react'
+import { Menu as MenuIcon, PanelLeft, Maximize2, Minimize2, BookOpen, Search, MoreVertical, Home, LayoutGrid, FileText, Upload, Download, CalendarClock, Clock, Trash2, Settings, HelpCircle, Check, X, Layers, Undo2, Lightbulb } from 'lucide-react'
 import { useBook } from '@/hooks/useBook'
 import { useSettings } from '@/lib/settings'
 import { useLayoutMode, useOnScreenKeyboard, keepCaretInView } from '@/hooks/useViewport'
@@ -8,7 +8,9 @@ import BookTree from '@/components/BookTree'
 import ChapterView from '@/components/ChapterView'
 import SidePanel from '@/components/SidePanel'
 import BoardView from '@/components/BoardView'
-import { SaveStatus, TextSizeControl, FormatBar, SprintButton, DriveBadge } from '@/components/WorkspaceBits'
+import { SaveStatus, TextSizeControl, FormatBar, SprintButton, DriveBadge, TextMenu } from '@/components/WorkspaceBits'
+import IdeasDialog from '@/components/IdeasDialog'
+import { NOTE_TYPES } from '@/lib/text'
 import { VersionsDialog, TrashDialog, FindReplaceDialog } from '@/components/Dialogs'
 import ExportDialog from '@/components/ExportDialog'
 import { Menu, MenuItem, MenuSeparator, IconButton, Button } from '@/components/ui'
@@ -47,7 +49,14 @@ export default function Workspace() {
   const [activeNoteId, setActiveNoteId] = useState(null)
   const [focusNoteId, setFocusNoteId] = useState(null)
   const [backPos, setBackPos] = useState(null)
-  const [dialog, setDialog] = useState(null) // versions | trash | find | export
+  const [dialog, setDialog] = useState(null) // versions | trash | find | export | ideas
+  const [textMenu, setTextMenu] = useState(null)
+  // The rail's "ideas" icon opens the ideas window here.
+  useEffect(() => {
+    if (!params.get('ideas')) return
+    setDialog('ideas')
+    const p = new URLSearchParams(params); p.delete('ideas'); setParams(p, { replace: true })
+  }, [params])
   const [exportChapters, setExportChapters] = useState(null)
   const editors = useRef(new Map())
   const [activeEditor, setActiveEditor] = useState(null)
@@ -104,7 +113,7 @@ export default function Workspace() {
   const closeDrawersIfNarrow = () => { if (layout !== 'wide') { if (layout === 'narrow') setTreeOpen(false); setSideOpen(false) } }
 
   const openChapter = useCallback((id) => {
-    setView('write'); setChapterId(id); setSceneId(null)
+    setView('write'); setChapterId(id); setSceneId(null); setBackPos(null)
     pendingScroll.current = { scrollTop: 0 }
     if (layout === 'narrow') setTreeOpen(false)
   }, [layout])
@@ -158,15 +167,16 @@ export default function Workspace() {
 
   // ---------- Notes ----------
   const editorFor = (sid) => editors.current.get(sid)
-  const addNote = useCallback(async () => {
-    const ed = activeEditor
+  const addNote = useCallback(async (kind, inScene) => {
+    const type = typeof kind === 'string' ? kind : 'fix'
+    const ed = (inScene && editors.current.get(inScene)) || activeEditor
     if (!ed) { toast('לחצו קודם בתוך הטקסט'); return }
     const sid = [...editors.current.entries()].find(([, e]) => e === ed)?.[0]
     const quote = ensureWordSelection(ed)
     if (!quote) { toast('סמנו מילה או משפט כדי להדביק עליהם פתק'); return }
     const { from, to } = ed.state.selection
-    const note = await bk.createRecord('notes', { scene_id: sid, type: 'fix', text: '', quote: quote.slice(0, 140), done: false, anchored: true })
-    ed.chain().setTextSelection({ from, to }).setMark('noteAnchor', { noteId: note.id, noteType: 'fix' }).setTextSelection(to).run()
+    const note = await bk.createRecord('notes', { scene_id: sid, type, text: '', quote: quote.slice(0, 140), done: false, anchored: true })
+    ed.chain().setTextSelection({ from, to }).setMark('noteAnchor', { noteId: note.id, noteType: type }).setTextSelection(to).run()
     ed.commands.blur()
     setActiveNoteId(note.id); setFocusNoteId(note.id); setSideTab('notes'); setSideOpen(true)
   }, [activeEditor, bk.createRecord])
@@ -228,6 +238,18 @@ export default function Workspace() {
     setActiveNoteId(noteId); setSideTab('notes'); setSideOpen(true)
     setTimeout(() => document.querySelector(`[data-testid="note-card-${noteId}"]`)?.scrollIntoView({ block: 'nearest' }), 100)
   }, [])
+
+  const noteById = (id) => bk.notes.find((n) => n.id === id)
+  const textMenuProps = {
+    menu: textMenu,
+    onClose: () => setTextMenu(null),
+    noteTypes: NOTE_TYPES,
+    onAddNote: (type) => addNote(type, textMenu?.sceneId),
+    onHighlight: () => editorFor(textMenu?.sceneId)?.chain().focus().toggleHighlight().run(),
+    onOpenNote: (id) => onAnchorClick(id),
+    onNoteDone: (id) => { const n = noteById(id); if (n) { onNoteDone(n, true); toast('הפתק סומן כבוצע') } },
+    onNoteDelete: (id) => { const n = noteById(id); if (n) onNoteDelete(n) },
+  }
 
   const splitHere = async () => {
     const ed = activeEditor
@@ -310,11 +332,11 @@ export default function Workspace() {
         <div className="h-11 shrink-0 flex items-center gap-2 px-3 border-b border-line text-sm">
           <span className="truncate font-medium flex-1">{scene?.title || chapter?.title || bk.book.title}</span>
           <span className="text-muted tabular-nums">היום {formatNumber(today.words)}</span>
-          <SaveStatus compact />
+          <SaveStatus />
           <button className="hit px-2 text-accent font-medium" onMouseDown={(e) => e.preventDefault()} onClick={() => activeEditor?.commands.blur()} data-testid="kb-done">סיום</button>
         </div>
         <div className="flex-1 min-h-0 flex flex-col">
-          <ChapterView ref={chapterRef} bk={bk} chapter={chapter} activeSceneId={scene?.id} notes={bk.notes} onSceneFocus={onSceneFocus} onEditorReady={onEditorReady} onSceneChange={onSceneChange} onAnchorClick={onAnchorClick} onFirstEdit={onFirstEdit} />
+          <ChapterView ref={chapterRef} bk={bk} chapter={chapter} activeSceneId={scene?.id} notes={bk.notes} onSceneFocus={onSceneFocus} onEditorReady={onEditorReady} onSceneChange={onSceneChange} onAnchorClick={onAnchorClick} onFirstEdit={onFirstEdit} onContextMenu={setTextMenu} />
         </div>
         <div className="h-11 shrink-0 flex items-center justify-center gap-1 border-t border-line bg-sunk" onMouseDown={(e) => e.preventDefault()}>
           <FormatBar editor={activeEditor} onAddNote={addNote} onSplit={splitHere} />
@@ -339,7 +361,7 @@ export default function Workspace() {
             {plan.todayTarget > 0 && today.words >= plan.todayTarget && <Check size={14} className="text-ok" />}
           </Link>}
           {layout === 'wide' && <span className="w-px h-5 bg-line" aria-hidden />}
-          <span className="px-1.5"><SaveStatus compact={layout !== 'wide'} /></span>
+          <SaveStatus />
           {layout !== 'narrow' && <span className="w-px h-5 bg-line" aria-hidden />}
           {layout !== 'narrow' && <DriveBadge state={drive} onClick={() => navigate('/settings#drive')} />}
         </div>
@@ -363,6 +385,7 @@ export default function Workspace() {
           )}
           <MenuItem icon={LayoutGrid} onSelect={() => setView(view === 'board' ? 'write' : 'board')}>{view === 'board' ? 'תצוגת כתיבה' : 'לוח כרטיסים'}</MenuItem>
           <MenuItem icon={Search} onSelect={() => setDialog('find')}>חיפוש והחלפה</MenuItem>
+          <MenuItem icon={Lightbulb} onSelect={() => setDialog('ideas')}>תיבת רעיונות</MenuItem>
           <MenuSeparator />
           <MenuItem icon={Upload} onSelect={() => navigate(`/book/${bookId}/import`)}>ייבוא קובץ וורד</MenuItem>
           <MenuItem icon={Download} onSelect={() => { setExportChapters(null); setDialog('export') }}>ייצוא לוורד או לפי די אף</MenuItem>
@@ -395,12 +418,17 @@ export default function Workspace() {
           )
         )}
 
-        <main className="flex-1 min-w-0 flex flex-col bg-surface" data-tour="editor">
+        <main className="relative flex-1 min-w-0 flex flex-col bg-surface" data-tour="editor">
           {view === 'board'
             ? <BoardView bk={bk} noteCounts={noteCounts} onOpenScene={openScene} />
             : chapter
-              ? <ChapterView ref={chapterRef} bk={bk} chapter={chapter} activeSceneId={scene?.id} notes={bk.notes} onSceneFocus={onSceneFocus} onEditorReady={onEditorReady} onSceneChange={onSceneChange} onAnchorClick={onAnchorClick} onFirstEdit={onFirstEdit} />
+              ? <ChapterView ref={chapterRef} bk={bk} chapter={chapter} activeSceneId={scene?.id} notes={bk.notes} onSceneFocus={onSceneFocus} onEditorReady={onEditorReady} onSceneChange={onSceneChange} onAnchorClick={onAnchorClick} onFirstEdit={onFirstEdit} onContextMenu={setTextMenu} />
               : <EmptyBook bk={bk} onOpenChapter={openChapter} />}
+          {backPos && backPos.chapterId !== chapterId && (
+            <div className="absolute bottom-16 inset-x-0 flex justify-center pointer-events-none z-10">
+              <Button className="pointer-events-auto shadow-[var(--shadow)]" onClick={goBack} data-testid="note-back"><Undo2 size={15} />חזרה לאיפה שהייתי</Button>
+            </div>
+          )}
           {view === 'write' && !focusMode && (
             <div className="chrome h-12 shrink-0 border-t border-line flex items-center justify-center bg-raised overflow-x-auto">
               <FormatBar editor={activeEditor} onAddNote={addNote} onSplit={splitHere} />
@@ -428,6 +456,8 @@ export default function Workspace() {
         )}
       </div>
 
+      <TextMenu {...textMenuProps} />
+      <IdeasDialog bk={bk} open={dialog === 'ideas'} onClose={() => setDialog(null)} onOpenScene={openScene} onOpenChapter={openChapter} />
       <VersionsDialog bk={bk} scene={scene} open={dialog === 'versions'} onClose={() => setDialog(null)} />
       <TrashDialog bk={bk} open={dialog === 'trash'} onClose={() => setDialog(null)} />
       <FindReplaceDialog bk={bk} open={dialog === 'find'} onClose={() => setDialog(null)} onOpenScene={openScene} />

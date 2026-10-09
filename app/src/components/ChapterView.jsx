@@ -10,7 +10,7 @@ import { useSettings } from '@/lib/settings'
  * A chapter shown as one continuous page made of its scenes.
  * Draws note markers in the margin and on a strip next to the scrollbar.
  */
-const ChapterView = forwardRef(function ChapterView({ bk, chapter, activeSceneId, notes, onSceneFocus, onEditorReady, onSceneChange, onAnchorClick, onFirstEdit, editable = true, maxWidth = '68ch' }, ref) {
+const ChapterView = forwardRef(function ChapterView({ bk, chapter, activeSceneId, notes, onSceneFocus, onEditorReady, onSceneChange, onAnchorClick, onFirstEdit, onContextMenu, editable = true, maxWidth = '68ch' }, ref) {
   const scrollRef = useRef(null)
   const contentRef = useRef(null)
   const { settings } = useSettings()
@@ -92,6 +92,7 @@ const ChapterView = forwardRef(function ChapterView({ bk, chapter, activeSceneId
                   onReady={onEditorReady}
                   onChange={onSceneChange}
                   onAnchorClick={onAnchorClick}
+                  onContextMenu={onContextMenu}
                   onFirstEdit={onFirstEdit}
                   placeholder={i === 0 ? 'כאן כותבים. הכול נשמר לבד.' : 'המשך כאן…'}
                 />

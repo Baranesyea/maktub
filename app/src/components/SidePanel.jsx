@@ -1,28 +1,26 @@
 import { useState } from 'react'
 import * as Tabs from '@radix-ui/react-tabs'
-import { Plus, Trash2, ArrowUpLeft, History, X } from 'lucide-react'
+import { Plus, Trash2, History, X } from 'lucide-react'
 import NotesPanel from '@/components/NotesPanel'
 import { Button, IconButton, inputClass } from '@/components/ui'
 import { SCENE_STATUS } from '@/lib/text'
 import { formatTime, parseFuzzy, resolveTime, ageAt } from '@/lib/timeline'
 import { chapterLabel } from '@/hooks/useBook'
 import { cn } from '@/lib/utils'
-import { toast } from '@/lib/toast'
 
 export default function SidePanel({ bk, tab, onTab, scene, chapter, notesProps, onOpenScene, onShowVersions, onClose }) {
   return (
     <Tabs.Root value={tab} onValueChange={onTab} dir="rtl" className="h-full flex flex-col bg-surface" data-tour="side">
       <div className="flex items-center border-b border-line pe-1">
         <Tabs.List className="flex flex-1 overflow-x-auto" aria-label="חלונית צד">
-          {[['notes', 'פתקים'], ['scene', 'סצנה'], ['ideas', 'רעיונות'], ['people', 'דמויות ומקומות']].map(([k, l]) => (
-            <Tabs.Trigger key={k} value={k} className="hit px-3 text-sm whitespace-nowrap text-muted data-[state=active]:text-accent data-[state=active]:shadow-[inset_0_-2px_0_var(--accent)]" data-testid={`tab-${k}`}>{l}</Tabs.Trigger>
+          {[['notes', 'פתקים'], ['scene', 'סצנה'], ['people', 'דמויות ומקומות']].map(([k, l]) => (
+            <Tabs.Trigger key={k} value={k} className="hit px-3 text-sm whitespace-nowrap text-muted data-[state=active]:text-fg data-[state=active]:font-black data-[state=active]:shadow-[inset_0_-2px_0_var(--fg)]" data-testid={`tab-${k}`}>{l}</Tabs.Trigger>
           ))}
         </Tabs.List>
         {onClose && <IconButton label="סגור חלונית" onClick={onClose}><X size={17} /></IconButton>}
       </div>
       <Tabs.Content value="notes" className="flex-1 min-h-0"><NotesPanel bk={bk} {...notesProps} /></Tabs.Content>
       <Tabs.Content value="scene" className="flex-1 min-h-0 overflow-y-auto"><ScenePanel bk={bk} scene={scene} chapter={chapter} onShowVersions={onShowVersions} /></Tabs.Content>
-      <Tabs.Content value="ideas" className="flex-1 min-h-0 overflow-y-auto"><IdeasPanel bk={bk} chapter={chapter} onOpenScene={onOpenScene} /></Tabs.Content>
       <Tabs.Content value="people" className="flex-1 min-h-0 overflow-y-auto"><PeoplePanel bk={bk} /></Tabs.Content>
     </Tabs.Root>
   )
@@ -153,41 +151,6 @@ export function StoryTimeEditor({ bk, scene, onChange }) {
         </div>
       )}
       <div className="text-xs text-muted">{formatTime(scene, ctx)}</div>
-    </div>
-  )
-}
-
-function IdeasPanel({ bk, chapter, onOpenScene }) {
-  const [text, setText] = useState('')
-  const add = async () => {
-    const t = text.trim()
-    if (!t) return
-    setText('')
-    await bk.createRecord('ideas', { text: t, done: false })
-  }
-  const ideas = [...bk.ideas].filter((i) => !i.done).sort((a, b) => String(b.created_date).localeCompare(String(a.created_date)))
-  return (
-    <div className="p-3 flex flex-col gap-3">
-      <div className="flex gap-2">
-        <textarea className={cn(inputClass, 'flex-1 h-auto py-2')} rows={2} value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); add() } }} placeholder="רעיון חדש. בלי להחליט לאן הוא שייך." data-testid="idea-input" />
-        <IconButton label="הוסף רעיון" onClick={add}><Plus size={18} /></IconButton>
-      </div>
-      {ideas.length === 0 && <p className="text-sm text-muted text-center p-3">תיבת הרעיונות ריקה.</p>}
-      {ideas.map((i) => (
-        <div key={i.id} className="rounded-xl border border-line p-3 text-[14px] leading-6">
-          <div className="whitespace-pre-wrap">{i.text}</div>
-          <div className="flex gap-1 mt-2">
-            <Button size="sm" variant="ghost" disabled={!chapter} onClick={async () => {
-              const s = await bk.addScene(chapter.id, null, { summary: i.text, status: 'idea' })
-              bk.update('ideas', i.id, { done: true, scene_id: s.id })
-              onOpenScene(s.id)
-              toast('הרעיון הפך לסצנה בפרק הנוכחי')
-            }}><ArrowUpLeft size={15} />הפוך לסצנה</Button>
-            <div className="flex-1" />
-            <IconButton label="מחק רעיון" onClick={() => bk.removeRecord('ideas', i.id)}><Trash2 size={15} /></IconButton>
-          </div>
-        </div>
-      ))}
     </div>
   )
 }

@@ -1,7 +1,7 @@
 // The application frame: a fixed navigation rail on every screen, and the page anatomy
 // (header, panels, stat tiles) that every page is built from.
 import { NavLink, useMatch } from 'react-router-dom'
-import { Home as HomeIcon, PenLine, CalendarClock, History, BookOpen, Upload, Settings, Cloud, CloudOff, AlertTriangle, Loader2, LogOut } from 'lucide-react'
+import { Home as HomeIcon, Lightbulb, PenLine, CalendarClock, History, BookOpen, Upload, Settings, Cloud, CloudOff, AlertTriangle, Loader2, LogOut } from 'lucide-react'
 import { LogoMark } from '@/components/Logo'
 import { Menu, MenuItem, MenuLabel, MenuSeparator } from '@/components/ui'
 import { useSettings } from '@/lib/settings'
@@ -9,7 +9,7 @@ import { useAuth } from '@/lib/AuthContext'
 import { useDriveState } from '@/lib/drive'
 import { cn } from '@/lib/utils'
 
-function RailLink({ to, icon: Icon, label, end, testid }) {
+function RailLink({ to, icon: Icon, label, end, testid, match = true }) {
   return (
     <NavLink
       to={to}
@@ -17,12 +17,12 @@ function RailLink({ to, icon: Icon, label, end, testid }) {
       data-testid={testid}
       className={({ isActive }) => cn(
         'relative w-[64px] min-h-[54px] flex flex-col items-center justify-center gap-1 rounded-xl text-[11px] leading-none transition-colors',
-        isActive ? 'bg-[var(--rail-active)] text-white' : 'text-[var(--rail-fg)] hover:text-white hover:bg-[var(--rail-hover)]',
+        isActive && match ? 'bg-[var(--rail-active)] text-white' : 'text-[var(--rail-fg)] hover:text-white hover:bg-[var(--rail-hover)]',
       )}
     >
       {({ isActive }) => (
         <>
-          {isActive && <span className="absolute -right-[6px] top-3 bottom-3 w-[3px] rounded-full bg-white" aria-hidden />}
+          {isActive && match && <span className="absolute -right-[6px] top-3 bottom-3 w-[3px] rounded-full bg-white" aria-hidden />}
           <Icon size={19} strokeWidth={1.8} />
           <span>{label}</span>
         </>
@@ -77,6 +77,7 @@ export function Rail() {
           <RailLink to={`/book/${bookId}/plan`} icon={CalendarClock} label="תכנון" testid="nav-plan" />
           <RailLink to={`/book/${bookId}/timeline`} icon={History} label="ציר זמן" testid="nav-timeline" />
           <RailLink to={`/book/${bookId}/read`} icon={BookOpen} label="קריאה" testid="nav-read" />
+          <RailLink to={`/book/${bookId}?ideas=1`} icon={Lightbulb} label="רעיונות" testid="nav-ideas" match={false} />
         </>
       )}
       <div className="w-10 h-px bg-white/10 my-1.5" />

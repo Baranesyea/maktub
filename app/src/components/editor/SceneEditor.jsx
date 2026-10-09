@@ -11,12 +11,12 @@ import { recordTyping } from '@/lib/stats'
  * One scene's text. Saves through onChange (the caller queues it in the outbox).
  * Counts typed words for the daily goal; pasted text changes the book count only.
  */
-export default function SceneEditor({ scene, paragraphStyle = 'indent', editable = true, onChange, onFocus, onReady, onAnchorClick, onFirstEdit, placeholder = 'כאן כותבים…' }) {
+export default function SceneEditor({ scene, paragraphStyle = 'indent', editable = true, onChange, onFocus, onReady, onAnchorClick, onFirstEdit, onContextMenu, placeholder = 'כאן כותבים…' }) {
   const pastedAt = useRef(0)
   const wordsRef = useRef(scene.word_count || 0)
   const firstEditDone = useRef(false)
   const cbs = useRef({})
-  cbs.current = { onChange, onFocus, onAnchorClick, onFirstEdit }
+  cbs.current = { onChange, onFocus, onAnchorClick, onFirstEdit, onContextMenu }
 
   const editor = useEditor({
     extensions: [
@@ -31,6 +31,18 @@ export default function SceneEditor({ scene, paragraphStyle = 'indent', editable
       attributes: { dir: 'rtl', lang: 'he', spellcheck: 'true', class: 'ProseMirror', 'data-scene-id': scene.id, 'aria-label': 'טקסט הסצנה' },
       handlePaste: () => { pastedAt.current = Date.now(); return false },
       handleDrop: () => { pastedAt.current = Date.now(); return false },
+      // Right click on a selection, or on text that already has a note: our own menu.
+      // Anywhere else the browser's menu stays, with its spelling suggestions.
+      handleDOMEvents: {
+        contextmenu: (view, event) => {
+          const onAnchor = event.target?.closest?.('[data-note-id]')?.getAttribute('data-note-id') || null
+          const { from, to } = view.state.selection
+          if (!onAnchor && from === to) return false
+          event.preventDefault()
+          cbs.current.onContextMenu?.({ sceneId: scene.id, x: event.clientX, y: event.clientY, noteId: onAnchor, hasSelection: from !== to })
+          return true
+        },
+      },
       handleClickOn: (view, pos, node, nodePos, event) => {
         const el = event.target?.closest?.('[data-note-id]')
         if (el) cbs.current.onAnchorClick?.(el.getAttribute('data-note-id'), scene.id)

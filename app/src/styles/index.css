@@ -29,7 +29,8 @@
   --note-check: #55585f;
   --note-idea: #8d9098;
   --note-question: #b6b8bd;
-  --anchor-bg: rgba(20, 21, 24, 0.07);
+  --anchor-bg: rgba(20, 21, 24, 0.11);
+  --saved: #23864a;
   --ui-font: 'Fb Gofan Sans', 'Assistant', system-ui, sans-serif;
   --write-font: 'Fb Gofan Sans', 'Assistant', system-ui, sans-serif;
   --write-size: 19px;
@@ -56,7 +57,7 @@
   --rail-fg: #a89f8f;
   --shadow: 0 1px 2px rgba(60, 45, 20, 0.06), 0 6px 20px rgba(60, 45, 20, 0.07);
   --shadow-sm: 0 1px 2px rgba(60, 45, 20, 0.08);
-  --anchor-bg: rgba(34, 31, 26, 0.08);
+  --anchor-bg: rgba(34, 31, 26, 0.12);
   --warn: #4f483d;
   --ok: #221f1a;
   --danger: #221f1a;
@@ -100,7 +101,8 @@
   --warn: #c4c4c8;
   --ok: #ececed;
   --danger: #ececed;
-  --anchor-bg: rgba(236, 236, 237, 0.1);
+  --anchor-bg: rgba(236, 236, 237, 0.16);
+  --saved: #4ade80;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 6px 20px rgba(0, 0, 0, 0.3);
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
   color-scheme: dark;
@@ -166,10 +168,11 @@ button { -webkit-user-select: none; user-select: none; }
 .prose-write mark { background: color-mix(in srgb, var(--fg) 14%, transparent); color: inherit; border-radius: 2px; padding: 0 1px; }
 
 /* Note anchors inside the text */
-.note-anchor { background: var(--anchor-bg); border-bottom: 2px solid var(--note-fix); border-radius: 2px; cursor: pointer; }
-.note-anchor[data-note-type="check"] { border-bottom-color: var(--note-check); background: color-mix(in srgb, var(--note-check) 16%, transparent); }
-.note-anchor[data-note-type="idea"] { border-bottom-color: var(--note-idea); background: color-mix(in srgb, var(--note-idea) 16%, transparent); }
-.note-anchor[data-note-type="question"] { border-bottom-color: var(--note-question); background: color-mix(in srgb, var(--note-question) 16%, transparent); }
+/* Text with a note on it: always marked, like a pencil underline in the margin of a proof. */
+.note-anchor { background: var(--anchor-bg); border-bottom: 2px solid var(--note-fix); border-radius: 2px 2px 0 0; cursor: pointer; padding-bottom: 1px; }
+.note-anchor[data-note-type="check"] { border-bottom-color: var(--note-check); }
+.note-anchor[data-note-type="idea"] { border-bottom-style: dashed; border-bottom-color: var(--note-check); }
+.note-anchor[data-note-type="question"] { border-bottom-style: dotted; border-bottom-width: 3px; border-bottom-color: var(--note-check); }
 .note-anchor.is-active { outline: 2px solid var(--accent); outline-offset: 1px; }
 
 .search-hit { background: color-mix(in srgb, var(--accent) 25%, transparent); border-radius: 2px; }

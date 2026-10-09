@@ -136,7 +136,7 @@ await test('offline: text is kept locally and sent when the connection returns',
   await ctx.setOffline(true)
   await page.keyboard.type(' כתוב בלי אינטרנט')
   await waitFor(async () => (await page.getAttribute('[data-testid="save-status"]', 'data-state')) === 'offline', 'offline state')
-  assert((await page.textContent('[data-testid="save-status"]')).includes('במחשב'), 'offline message')
+  assert((await page.getAttribute('[data-testid="save-status"]', 'title')).includes('במחשב'), 'offline message')
   const outbox = await page.evaluate(() => localStorage.getItem('maktub_outbox_v1'))
   assert(outbox.includes('בלי אינטרנט'), 'outbox holds text')
   let s2 = (await store(page, 'Scene')).find((s) => s.id === 's2')
@@ -279,12 +279,10 @@ await test('notes: jump between chapters without losing your place, then go back
   await waitFor(async () => (await page.textContent('[data-testid="chapter-title"]')).includes('הדירה'), 'back to chapter 3')
 })
 
-await test('notes: next/previous, done removes the anchor, revision round', async (page) => {
+await test('notes: done removes the anchor and hides the note', async (page) => {
   await openBook(page)
   const n1 = await addNoteOnWord(page, 's1', 'המזגן')
   const n2 = await addNoteOnWord(page, 's2', 'הארגזים')
-  await page.click('[data-testid="note-next"]')
-  await page.click('[data-testid="note-next"]')
   await page.click(`[data-testid="note-done-${n1.id}"]`)
   await sleep(1300)
   const s1 = (await store(page, 'Scene')).find((s) => s.id === 's1')
@@ -292,6 +290,56 @@ await test('notes: next/previous, done removes the anchor, revision round', asyn
   assert((await store(page, 'Note')).find((n) => n.id === n1.id).done === true, 'note done')
   assert(await page.locator(`[data-testid="note-card-${n1.id}"]`).count() === 0, 'hidden from open list')
   assert(await page.locator(`[data-testid="note-card-${n2.id}"]`).count() === 1, 'other note still open')
+})
+
+await test('notes: select text, right click, choose a note type; right click the note to finish it', async (page) => {
+  await openBook(page)
+  await page.evaluate(() => {
+    const root = document.querySelector('.ProseMirror[data-scene-id="s1"]')
+    const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
+    for (let n = w.nextNode(); n; n = w.nextNode()) { const i = n.nodeValue.indexOf('אמא שלי'); if (i >= 0) { const r = document.createRange(); r.setStart(n, i); r.setEnd(n, i + 7); const s = getSelection(); s.removeAllRanges(); s.addRange(r); break } }
+  })
+  await sleep(150)
+  const box = await page.evaluate(() => { const r = getSelection().getRangeAt(0).getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 } })
+  await page.mouse.click(box.x, box.y, { button: 'right' })
+  await page.waitForSelector('[data-testid="text-menu"]', { timeout: 5000 }).catch(async (e) => { await page.screenshot({ path: OUT + '/rc-fail.png' }); throw new Error('first menu: ' + e.message.slice(0, 60)) })
+  await page.screenshot({ path: `${OUT}/text-menu.png` })
+  await page.click('[data-testid="menu-note-question"]')
+  await waitFor(async () => (await store(page, 'Note')).some((n) => n.quote === 'אמא שלי' && n.type === 'question'), 'question note created')
+  const note = (await store(page, 'Note')).find((n) => n.quote === 'אמא שלי')
+  await waitFor(async () => (await page.locator(`.note-anchor[data-note-id="${note.id}"]`).count()) === 1, 'marked in the text')
+  const style = await page.evaluate((id) => getComputedStyle(document.querySelector(`.note-anchor[data-note-id="${id}"]`)).borderBottomStyle, note.id)
+  assert(style === 'dotted', 'question notes are dotted: ' + style)
+  await page.keyboard.type('איך היא קראה לו?')
+  await sleep(300)
+  const a = await page.evaluate((id) => { const r = document.querySelector(`.note-anchor[data-note-id="${id}"]`).getClientRects()[0]; return { x: r.x + r.width / 2, y: r.y + r.height / 2 } }, note.id)
+  await page.mouse.click(a.x, a.y, { button: 'right' })
+  await page.waitForSelector('[data-testid="menu-open-note"]', { timeout: 5000 }).catch(async (e) => { await page.screenshot({ path: OUT + '/rc-fail.png' }); throw new Error('second menu: ' + e.message.slice(0, 60)) })
+  await page.getByRole('menuitem', { name: 'סמן כבוצע' }).click()
+  await waitFor(async () => (await store(page, 'Note')).find((n) => n.id === note.id).done === true, 'done from the menu')
+  assert(await page.locator(`.note-anchor[data-note-id="${note.id}"]`).count() === 0, 'mark removed from text')
+})
+
+await test('ideas: open from the rail, add one linked to a chapter, it opens that chapter', async (page) => {
+  await openBook(page)
+  await page.click('[data-testid="nav-ideas"]')
+  await page.waitForSelector('[data-testid="ideas-dialog"]')
+  await page.fill('[data-testid="idea-input"]', 'אולי האח בכלל לא עבר איתם')
+  await page.click('[data-testid="idea-link"]')
+  await page.selectOption('[data-testid="idea-link-select"]', 'c:c2')
+  await page.click('[data-testid="idea-add"]')
+  await waitFor(async () => (await store(page, 'Idea')).some((i) => i.link_chapter_id === 'c2'), 'idea saved with link')
+  await page.getByRole('button', { name: /פרק 2/ }).click()
+  await waitFor(async () => (await page.textContent('[data-testid="chapter-title"]')).includes('אחי'), 'opened the linked chapter')
+  assert(await page.locator('[data-testid="tab-ideas"]').count() === 0, 'no ideas tab in the side panel')
+})
+
+await test('save status is a single tick with details on hover', async (page) => {
+  await openBook(page)
+  const el = page.locator('[data-testid="save-status"]')
+  await waitFor(async () => (await el.getAttribute('data-state')) === 'saved', 'saved')
+  assert((await el.innerText()).trim() === '', 'no words, only the icon')
+  assert((await el.getAttribute('title')).includes('שמור'), 'details in the tooltip')
 })
 
 // ---------------------------------------------------------------- Modes and size

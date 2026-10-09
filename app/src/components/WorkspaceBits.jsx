@@ -1,27 +1,27 @@
 import { useEffect, useRef, useState } from 'react'
 import * as Popover from '@radix-ui/react-popover'
-import { Bold, Italic, Highlighter, Heading2, Quote, Minus as Rule, Pin, Scissors, Timer, Cloud, CloudOff, Check, Loader2, AlertTriangle, Undo2, Redo2 } from 'lucide-react'
+import { Bold, Italic, Highlighter, Heading2, Quote, Minus as Rule, Pin, Scissors, Timer, Cloud, CloudOff, Check, Loader2, AlertTriangle, Undo2, Redo2, Trash2 as Trash } from 'lucide-react'
 import { subscribeSave } from '@/lib/outbox'
 import { onTypedWords } from '@/lib/stats'
 import { IconButton, Button } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import { formatNumber } from '@/lib/text'
 
-/** "נשמר" / "שומר…" / "אין חיבור, השינויים שמורים במחשב". Always visible. */
-export function SaveStatus({ compact }) {
+/** A single tick: green when everything is on the server, grey while saving or waiting. Details on hover. */
+export function SaveStatus() {
   const [s, setS] = useState({ status: 'saved' })
   useEffect(() => subscribeSave(setS), [])
-  const map = {
-    saved: { icon: Check, text: 'נשמר', cls: 'text-ok' },
-    saving: { icon: Loader2, text: 'שומר…', cls: 'text-muted', spin: true },
-    offline: { icon: CloudOff, text: 'אין חיבור, השינויים שמורים במחשב', short: 'שמור במחשב', cls: 'text-warn' },
-    error: { icon: AlertTriangle, text: 'שגיאת שמירה, מנסה שוב. השינויים שמורים במחשב', short: 'מנסה שוב', cls: 'text-warn' },
-  }[s.status] || {}
-  const Icon = map.icon || Check
+  const text = {
+    saved: 'הכול שמור בשרת',
+    saving: 'שומר…',
+    offline: 'אין חיבור לאינטרנט. השינויים שמורים במחשב ויישלחו כשהחיבור יחזור.',
+    error: 'השמירה לשרת נכשלה ומכתוב מנסה שוב. השינויים שמורים במחשב.',
+  }[s.status] || 'הכול שמור בשרת'
+  const ok = s.status === 'saved'
   return (
-    <span className={cn('inline-flex items-center gap-1 text-sm whitespace-nowrap', map.cls)} role="status" aria-live="polite" data-testid="save-status" data-state={s.status} data-tour="save">
-      <Icon size={14} className={map.spin ? 'animate-spin' : ''} />
-      <span>{compact ? map.short || map.text : map.text}</span>
+    <span className={cn('inline-flex items-center justify-center w-8 h-8 rounded-md', ok ? 'text-[var(--saved)]' : 'text-faint', s.status === 'saving' && 'animate-pulse')}
+      role="status" aria-label={text} title={text} data-testid="save-status" data-state={s.status} data-tour="save">
+      <Check size={17} strokeWidth={2.4} />
     </span>
   )
 }
@@ -130,5 +130,60 @@ export function DriveBadge({ state, onClick }) {
     <button onClick={onClick} className={cn('hit inline-flex items-center gap-1 rounded-lg px-2 text-sm whitespace-nowrap hover:bg-sunk', map.cls)} data-testid="drive-status" data-tour="drive">
       <Icon size={15} className={map.spin ? 'animate-spin' : ''} /><span className="hidden lg:inline">{map.text}</span>
     </button>
+  )
+}
+
+/** The menu that opens on a right click over selected text or over a note in the text. */
+export function TextMenu({ menu, onClose, onAddNote, onHighlight, onOpenNote, onNoteDone, onNoteDelete, noteTypes }) {
+  const ref = useRef(null)
+  useEffect(() => {
+    if (!menu) return
+    const close = (e) => { if (!ref.current?.contains(e.target)) onClose() }
+    const key = (e) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('mousedown', close, true)
+    window.addEventListener('keydown', key)
+    window.addEventListener('wheel', onClose, { passive: true })
+    window.addEventListener('resize', onClose)
+    return () => {
+      window.removeEventListener('mousedown', close, true); window.removeEventListener('keydown', key)
+      window.removeEventListener('wheel', onClose); window.removeEventListener('resize', onClose)
+    }
+  }, [menu, onClose])
+  useEffect(() => { ref.current?.querySelector('button')?.focus() }, [menu])
+  if (!menu) return null
+  const W = 230
+  const left = Math.min(Math.max(8, menu.x - W), window.innerWidth - W - 8)
+  const top = Math.min(menu.y, window.innerHeight - 320)
+  const item = 'w-full flex items-center gap-2.5 rounded-md px-2.5 min-h-[36px] text-start hover:bg-sunk focus:bg-sunk outline-none focus-visible:outline-none'
+  return (
+    <div ref={ref} role="menu" dir="rtl" className="fixed z-[70] rounded-xl border border-line bg-surface p-1.5 shadow-[var(--shadow)] text-[14px]" style={{ left, top, width: W }} data-testid="text-menu"
+      onKeyDown={(e) => {
+        if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return
+        e.preventDefault()
+        const items = [...ref.current.querySelectorAll('button')]
+        const i = items.indexOf(document.activeElement)
+        items[(i + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length]?.focus()
+      }}>
+      {menu.noteId && (
+        <>
+          <button role="menuitem" className={item} onClick={() => { onOpenNote(menu.noteId); onClose() }} data-testid="menu-open-note"><Pin size={15} />פתח את הפתק</button>
+          <button role="menuitem" className={item} onClick={() => { onNoteDone(menu.noteId); onClose() }}><Check size={15} />סמן כבוצע</button>
+          <button role="menuitem" className={item} onClick={() => { onNoteDelete(menu.noteId); onClose() }}><Trash size={15} />מחק את הפתק</button>
+          {menu.hasSelection && <div className="h-px bg-line my-1" />}
+        </>
+      )}
+      {menu.hasSelection && (
+        <>
+          <div className="px-2.5 pt-1 pb-1.5 text-[12px] text-muted">פתק על הטקסט המסומן</div>
+          {Object.entries(noteTypes).map(([k, t]) => (
+            <button key={k} role="menuitem" className={item} onClick={() => { onAddNote(k); onClose() }} data-testid={`menu-note-${k}`}>
+              <span className="w-3 h-3 rounded-sm border border-line-strong" style={{ background: t.color }} aria-hidden />{t.label}
+            </button>
+          ))}
+          <div className="h-px bg-line my-1" />
+          <button role="menuitem" className={item} onClick={() => { onHighlight(); onClose() }}><Highlighter size={15} />מרקר</button>
+        </>
+      )}
+    </div>
   )
 }
