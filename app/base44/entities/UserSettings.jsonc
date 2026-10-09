@@ -1,0 +1,70 @@
+{
+  "name": "UserSettings",
+  "type": "object",
+  "properties": {
+    "ui_font": {
+      "type": "string"
+    },
+    "write_font": {
+      "type": "string"
+    },
+    "write_size": {
+      "type": "number"
+    },
+    "read_size": {
+      "type": "number"
+    },
+    "ipad_size": {
+      "type": "number"
+    },
+    "theme": {
+      "type": "string"
+    },
+    "reading_theme": {
+      "type": "string"
+    },
+    "typewriter": {
+      "type": "boolean",
+      "default": true
+    },
+    "paragraph_style": {
+      "type": "string"
+    },
+    "tour_done": {
+      "type": "boolean",
+      "default": false
+    },
+    "kb_tip_seen": {
+      "type": "boolean",
+      "default": false
+    },
+    "note_to_self": {
+      "type": "object"
+    },
+    "last_book_id": {
+      "type": "string"
+    },
+    "last_position": {
+      "type": "object"
+    },
+    "drive": {
+      "type": "object"
+    },
+    "words_per_hour": {
+      "type": "number"
+    }
+  },
+  "required": [],
+  "rls": {
+    "create": true,
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "update": {
+      "created_by": "{{user.email}}"
+    },
+    "delete": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}

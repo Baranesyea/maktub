@@ -24,7 +24,7 @@ async function ensureToday() {
   creating = (async () => {
     try {
       const rows = await db.WritingDay.filter({ date })
-      today = rows[0] || await db.WritingDay.create({ date, words: 0, seconds: 0, sessions: [] })
+      today = rows[0] || await db.WritingDay.create({ date, words: 0, seconds: 0 })
     } catch {
       today = { id: null, date, words: 0, seconds: 0 }
     }

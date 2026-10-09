@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ArrowRight, AlertTriangle, CheckCircle2, X } from 'lucide-react'
 import { useBook, chapterLabel } from '@/hooks/useBook'

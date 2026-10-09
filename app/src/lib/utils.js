@@ -11,3 +11,4 @@ export const todayKey = (d = new Date()) => {
   return `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}`
 }
 export const isMock = import.meta.env.VITE_MOCK === '1'
+export const isIframe = typeof window !== 'undefined' && window.self !== window.top

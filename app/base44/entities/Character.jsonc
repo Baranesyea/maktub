@@ -1,0 +1,45 @@
+{
+  "name": "Character",
+  "type": "object",
+  "properties": {
+    "book_id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "character",
+        "place"
+      ],
+      "default": "character"
+    },
+    "description": {
+      "type": "string"
+    },
+    "birth_date": {
+      "type": "string"
+    },
+    "death_date": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "book_id",
+    "name"
+  ],
+  "rls": {
+    "create": true,
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "update": {
+      "created_by": "{{user.email}}"
+    },
+    "delete": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}

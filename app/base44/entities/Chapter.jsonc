@@ -1,0 +1,53 @@
+{
+  "name": "Chapter",
+  "type": "object",
+  "properties": {
+    "book_id": {
+      "type": "string"
+    },
+    "part_id": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "chapter",
+        "prologue",
+        "epilogue"
+      ],
+      "default": "chapter"
+    },
+    "order": {
+      "type": "number"
+    },
+    "unused": {
+      "type": "boolean",
+      "default": false
+    },
+    "deleted": {
+      "type": "boolean",
+      "default": false
+    },
+    "deleted_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "book_id"
+  ],
+  "rls": {
+    "create": true,
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "update": {
+      "created_by": "{{user.email}}"
+    },
+    "delete": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}

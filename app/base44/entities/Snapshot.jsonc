@@ -1,0 +1,36 @@
+{
+  "name": "Snapshot",
+  "type": "object",
+  "properties": {
+    "book_id": {
+      "type": "string"
+    },
+    "scene_id": {
+      "type": "string"
+    },
+    "content": {
+      "type": "string"
+    },
+    "word_count": {
+      "type": "number"
+    },
+    "reason": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "scene_id"
+  ],
+  "rls": {
+    "create": true,
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "update": {
+      "created_by": "{{user.email}}"
+    },
+    "delete": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}

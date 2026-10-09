@@ -1,0 +1,30 @@
+{
+  "name": "WritingDay",
+  "type": "object",
+  "properties": {
+    "date": {
+      "type": "string"
+    },
+    "words": {
+      "type": "number"
+    },
+    "seconds": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "date"
+  ],
+  "rls": {
+    "create": true,
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "update": {
+      "created_by": "{{user.email}}"
+    },
+    "delete": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}

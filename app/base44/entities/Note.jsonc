@@ -1,0 +1,55 @@
+{
+  "name": "Note",
+  "type": "object",
+  "properties": {
+    "book_id": {
+      "type": "string"
+    },
+    "scene_id": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "fix",
+        "check",
+        "idea",
+        "question"
+      ],
+      "default": "fix"
+    },
+    "text": {
+      "type": "string"
+    },
+    "quote": {
+      "type": "string"
+    },
+    "anchored": {
+      "type": "boolean",
+      "default": false
+    },
+    "done": {
+      "type": "boolean",
+      "default": false
+    },
+    "done_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "book_id",
+    "scene_id"
+  ],
+  "rls": {
+    "create": true,
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "update": {
+      "created_by": "{{user.email}}"
+    },
+    "delete": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}

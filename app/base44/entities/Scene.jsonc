@@ -1,0 +1,79 @@
+{
+  "name": "Scene",
+  "type": "object",
+  "properties": {
+    "book_id": {
+      "type": "string"
+    },
+    "chapter_id": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "summary": {
+      "type": "string"
+    },
+    "content": {
+      "type": "string"
+    },
+    "word_count": {
+      "type": "number"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "idea",
+        "draft",
+        "editing",
+        "done"
+      ],
+      "default": "idea"
+    },
+    "order": {
+      "type": "number"
+    },
+    "unused": {
+      "type": "boolean",
+      "default": false
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "character_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "story_time": {
+      "type": "object"
+    },
+    "deleted": {
+      "type": "boolean",
+      "default": false
+    },
+    "deleted_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "book_id",
+    "chapter_id"
+  ],
+  "rls": {
+    "create": true,
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "update": {
+      "created_by": "{{user.email}}"
+    },
+    "delete": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}

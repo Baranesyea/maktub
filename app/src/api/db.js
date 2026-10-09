@@ -56,13 +56,13 @@ function mockEntity(name) {
     },
     async list(sort, limit) { return this.filter({}, sort, limit) },
     async get(id) { await net(); const r = read().find((x) => x.id === id); if (!r) throw new Error('not found'); return r },
-    async create(data) { await net(); const rows = read(); const rec = stamp(data); rows.push(rec); write(rows); return rec },
-    async bulkCreate(list) { await net(); const rows = read(); const recs = list.map(stamp); write([...rows, ...recs]); return recs },
+    async create(data) { await net(); const rows = read(); const rec = stamp(sanitize(data)); rows.push(rec); write(rows); return rec },
+    async bulkCreate(list) { await net(); const rows = read(); const recs = list.map((d) => stamp(sanitize(d))); write([...rows, ...recs]); return recs },
     async update(id, data) {
       await net()
       const rows = read(); const i = rows.findIndex((r) => r.id === id)
       if (i < 0) throw new Error('not found')
-      rows[i] = { ...rows[i], ...data, updated_date: new Date().toISOString() }
+      rows[i] = { ...rows[i], ...sanitize(data), updated_date: new Date().toISOString() }
       write(rows); return rows[i]
     },
     async delete(id) { await net(); write(read().filter((r) => r.id !== id)); return { success: true } },
@@ -78,6 +78,20 @@ async function realEntities() {
   return real
 }
 
+// Base44 validates field types, so an empty value is sent as the type's empty value instead of null.
+const OBJECT_FIELDS = new Set(['plan', 'story_time', 'note_to_self', 'last_position', 'drive'])
+const NUMBER_FIELDS = new Set(['words_per_hour', 'word_count', 'order', 'words', 'seconds', 'write_size', 'read_size', 'ipad_size'])
+export function sanitize(data) {
+  if (!data || typeof data !== 'object') return data
+  const out = {}
+  for (const [k, v] of Object.entries(data)) {
+    if (k.startsWith('_')) continue
+    if (v === null || v === undefined) out[k] = OBJECT_FIELDS.has(k) ? {} : NUMBER_FIELDS.has(k) ? 0 : ''
+    else out[k] = v
+  }
+  return out
+}
+
 function realEntity(name) {
   const call = async (method, ...args) => {
     if (typeof navigator !== 'undefined' && navigator.onLine === false) throw offlineError()
@@ -90,9 +104,9 @@ function realEntity(name) {
     filter: (q, s, l) => call('filter', q, s, l),
     list: (s, l) => call('list', s, l),
     get: (id) => call('get', id),
-    create: (d) => call('create', d),
-    bulkCreate: (l) => call('bulkCreate', l),
-    update: (id, d) => call('update', id, d),
+    create: (d) => call('create', sanitize(d)),
+    bulkCreate: (l) => call('bulkCreate', l.map(sanitize)),
+    update: (id, d) => call('update', id, sanitize(d)),
     delete: (id) => call('delete', id),
   }
 }

@@ -71,7 +71,7 @@ export function parseOrdinal(word = '') {
 /** Turn ASCII quote look-alikes into geresh/gershayim inside Hebrew numerals and abbreviations. */
 export function normalizeHebrew(s = '') {
   return String(s)
-    .replace(/[‎‏‪-‮⁦-⁩]/g, '')
+    .replace(/[\u200e\u200f\u202a-\u202e\u2066-\u2069]/g, '')
     .replace(/([א-ת])"([א-ת])/g, '$1״$2')
     .replace(/(^|[\s(])([א-ת])'(?=[\s.,:;)\-–]|$)/g, '$1$2׳')
 }
