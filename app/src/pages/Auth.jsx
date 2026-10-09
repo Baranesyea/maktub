@@ -4,6 +4,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
 import { Button, inputClass } from '@/components/ui'
 import { cn } from '@/lib/utils'
+import { Logo } from '@/components/Logo'
 
 const sdk = async () => (await import('@/api/base44Client')).base44
 
@@ -25,7 +26,7 @@ function Layout({ title, subtitle, children, footer }) {
     <div className="min-h-full flex items-center justify-center px-4 py-10" dir="rtl">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-accent text-white text-3xl font-write mb-3" aria-hidden>מ</div>
+          <Logo height={44} className="mx-auto mb-5" />
           <h1 className="text-2xl font-semibold">{title}</h1>
           {subtitle && <p className="text-muted mt-1">{subtitle}</p>}
         </div>

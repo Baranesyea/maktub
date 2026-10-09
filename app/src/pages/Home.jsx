@@ -1,3 +1,4 @@
+import { Logo } from '@/components/Logo'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Plus, Upload, Settings, MoreVertical, Flame, CloudOff, ArrowLeft, Archive, Copy, Pencil, Trash2, CalendarClock } from 'lucide-react'
@@ -47,7 +48,7 @@ export default function Home() {
   return (
     <div className="h-full overflow-y-auto">
       <header className="h-14 flex items-center gap-2 px-4 border-b border-line bg-surface">
-        <span className="font-semibold text-lg">מכתוב</span>
+        <Logo height={24} />
         <div className="flex-1" />
         <Link to="/settings"><IconButton label="הגדרות"><Settings size={18} /></IconButton></Link>
       </header>

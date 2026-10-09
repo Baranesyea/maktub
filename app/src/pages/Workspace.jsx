@@ -1,3 +1,4 @@
+import { Logo } from '@/components/Logo'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams, Link } from 'react-router-dom'
 import { Menu as MenuIcon, PanelLeft, Maximize2, Minimize2, BookOpen, Search, MoreVertical, Home, LayoutGrid, FileText, Upload, Download, CalendarClock, Clock, Trash2, Settings, HelpCircle, Check, X, Layers } from 'lucide-react'
@@ -328,7 +329,7 @@ export default function Workspace() {
       {/* Top bar */}
       <header className="chrome h-14 shrink-0 flex items-center gap-1 px-2 border-b border-line bg-surface min-w-0">
         {!focusMode && <IconButton label="עץ הספר" onClick={() => setTreeOpen((x) => !x)} active={treeOpen} data-testid="toggle-tree"><MenuIcon size={18} /></IconButton>}
-        <Link to="/" className="hit hidden sm:inline-flex items-center px-2 rounded-lg hover:bg-sunk font-semibold" aria-label="מסך הבית">מכתוב</Link>
+        <Link to="/" className="hit hidden sm:inline-flex items-center px-2 rounded-lg hover:bg-sunk" aria-label="מסך הבית"><Logo height={18} title={null} /></Link>
         <div className="hidden md:flex items-center gap-1 rounded-lg bg-sunk p-0.5" role="group" aria-label="תצוגה">
           <button className={cn('h-8 px-2.5 rounded-md text-sm inline-flex items-center gap-1', view === 'write' ? 'bg-surface shadow-sm' : 'text-muted')} onClick={() => setView('write')}><FileText size={15} />כתיבה</button>
           <button className={cn('h-8 px-2.5 rounded-md text-sm inline-flex items-center gap-1', view === 'board' ? 'bg-surface shadow-sm' : 'text-muted')} onClick={() => setView('board')} data-testid="view-board"><LayoutGrid size={15} />כרטיסים</button>
