@@ -37,7 +37,9 @@ const SettingsContext = createContext(null)
 
 function applyToDocument(s) {
   const root = document.documentElement
-  root.style.setProperty('--ui-font', fontById(s.ui_font).css)
+  const ui = fontById(s.ui_font)
+  root.style.setProperty('--ui-font', ui.text || ui.css)
+  root.style.setProperty('--ui-display-font', ui.css)
   root.style.setProperty('--write-font', fontById(s.write_font).css)
   root.style.setProperty('--write-size', `${s.write_size}px`)
   root.style.setProperty('--write-weight', String(s.write_weight || 300))

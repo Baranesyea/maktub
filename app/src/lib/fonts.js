@@ -3,7 +3,9 @@
 export const FONTS = [
   { id: 'gofan', name: 'גופן סאנס', css: "'Fb Gofan Sans', 'Assistant', sans-serif", kind: 'sans', mine: true, ui: true, write: true },
   { id: 'hamahapecha', name: 'המהפכה', css: "'Fb Hamahapecha', 'Assistant', sans-serif", kind: 'sans', mine: true, ui: true, write: true },
-  { id: 'basis', name: 'בסיס מעובה', css: "'Fb Basis Condensed', 'Assistant', sans-serif", kind: 'sans', mine: true, ui: true, write: false },
+  // Basis has only hairline (100) and black (900), so it is used for headings and big numbers;
+  // regular interface text stays in Gofan Sans, which reads well at small sizes.
+  { id: 'basis', name: 'בסיס מעובה', css: "'Fb Basis Condensed', 'Assistant', sans-serif", text: "'Fb Gofan Sans', 'Assistant', sans-serif", kind: 'sans', mine: true, ui: true, write: false },
   { id: 'mockup', name: 'מוקאפ (כתב יד)', css: "'Fb Mockup', 'Assistant', sans-serif", kind: 'hand', mine: true, ui: false, write: true },
   { id: 'assistant', name: 'אסיסטנט', css: "'Assistant', system-ui, sans-serif", kind: 'sans', ui: true, write: true },
   { id: 'heebo', name: 'היבו', css: "'Heebo', system-ui, sans-serif", kind: 'sans', ui: true, write: true },
