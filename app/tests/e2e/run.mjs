@@ -1034,6 +1034,29 @@ await test('editor: rename the chapter from its title above the text', async (pa
   assert((await page.textContent('[data-testid="chapter-title"]')).includes('המטבח של סבתא'), 'Escape keeps the old name')
 })
 
+await test('menus stay inside the screen, even long ones near an edge', { viewport: { width: 1100, height: 520 } }, async (page) => {
+  await page.goto(BASE + '/')
+  await page.evaluate(() => {
+    const now = new Date().toISOString()
+    const names = ['הוד', 'דין', 'יער', 'שיה', 'מיכאל', 'אליה', 'שמעון', 'שרה', 'דר׳ צרפתי', 'נועה', 'אבא', 'אמא', 'סבתא', 'המורה', 'השכן', 'הנהג', 'הרופאה', 'יואב']
+    localStorage.setItem('maktub_mock_Character', JSON.stringify(names.map((n, i) => ({ id: 'ch' + i, book_id: 'b1', name: n, kind: 'character', created_date: now, updated_date: now, created_by: 'writer@example.com' }))))
+  })
+  await openBook(page)
+  await page.goto(BASE + '/book/b1/research')
+  await page.click('[data-testid="research-new"]')
+  await page.waitForSelector('[data-testid="research-people"]')
+  await page.locator('[data-testid="research-people"]').scrollIntoViewIfNeeded()
+  await page.click('[data-testid="research-people"]')
+  const menu = page.locator('[role="menu"]').last()
+  await menu.waitFor()
+  await sleep(300)
+  const b = await menu.boundingBox()
+  assert(b.y >= 0 && b.y + b.height <= 520 + 1, `menu inside the screen, got top ${Math.round(b.y)} bottom ${Math.round(b.y + b.height)}`)
+  const scrolls = await menu.evaluate((el) => el.scrollHeight > el.clientHeight)
+  assert(scrolls, 'a long menu scrolls inside itself')
+  await page.screenshot({ path: `${OUT}/menu-edge.png` })
+})
+
 await test('tree: a long chapter name glides on hover to show all of it', async (page) => {
   await page.goto(BASE + '/')
   await page.evaluate(() => { const rows = JSON.parse(localStorage.getItem('maktub_mock_Chapter')); rows[1].title = 'אחי, הים, והקיץ שבו הכול התחיל להשתנות בלי שאף אחד שם לב'; localStorage.setItem('maktub_mock_Chapter', JSON.stringify(rows)) })

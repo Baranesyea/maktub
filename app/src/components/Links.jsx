@@ -44,7 +44,7 @@ export function CharacterPicker({ bk, value = [], onChange, testid = 'character-
             <button className="h-7 px-2.5 rounded-full border border-dashed border-line-strong text-sm text-muted hover:text-fg inline-flex items-center gap-1" data-testid={testid}><UserRound size={13} />דמויות ומקומות</button>
           </DropdownMenu.Trigger>
           <DropdownMenu.Portal>
-            <DropdownMenu.Content align="start" sideOffset={4} dir="rtl" className="z-[60] min-w-[200px] max-h-[320px] overflow-y-auto rounded-xl border border-line bg-surface p-1.5 shadow-[var(--shadow)] text-[15px]">
+            <DropdownMenu.Content align="start" sideOffset={4} collisionPadding={8} dir="rtl" className="z-[60] min-w-[200px] max-h-[min(320px,var(--radix-dropdown-menu-content-available-height))] overflow-y-auto rounded-xl border border-line bg-surface p-1.5 shadow-[var(--shadow)] text-[15px]">
               {people.map((c) => (
                 <DropdownMenu.Item key={c.id} onSelect={(e) => { e.preventDefault(); toggle(c.id) }} data-testid={`${testid}-option-${c.id}`}
                   className="flex items-center gap-2 rounded-lg px-2.5 min-h-[36px] cursor-pointer outline-none data-[highlighted]:bg-sunk">

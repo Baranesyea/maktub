@@ -94,7 +94,7 @@ export function SprintButton() {
         </button>
       </Popover.Trigger>
       <Popover.Portal>
-        <Popover.Content dir="rtl" sideOffset={6} className="z-50 w-64 rounded-xl border border-line bg-surface p-3 shadow-[var(--shadow)] text-sm">
+        <Popover.Content dir="rtl" sideOffset={6} collisionPadding={8} className="z-50 w-64 rounded-xl border border-line bg-surface p-3 shadow-[var(--shadow)] text-sm">
           {running ? (
             <div className="flex flex-col gap-2">
               <div>נשארו <b className="tabular-nums">{mm}:{String(ss).padStart(2, '0')}</b> דקות.</div>

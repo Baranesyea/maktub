@@ -33,7 +33,7 @@ export function Menu({ trigger, children, align = 'end', open, onOpenChange }) {
     <DropdownMenu.Root open={open} onOpenChange={onOpenChange} dir="rtl">
       <DropdownMenu.Trigger asChild>{trigger}</DropdownMenu.Trigger>
       <DropdownMenu.Portal>
-        <DropdownMenu.Content align={align} sideOffset={6} className="z-50 min-w-[200px] rounded-xl border border-line bg-surface p-1.5 shadow-[var(--shadow)] text-[15px]" dir="rtl">
+        <DropdownMenu.Content align={align} sideOffset={6} collisionPadding={8} className="z-50 min-w-[200px] max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto rounded-xl border border-line bg-surface p-1.5 shadow-[var(--shadow)] text-[15px]" dir="rtl">
           {children}
         </DropdownMenu.Content>
       </DropdownMenu.Portal>

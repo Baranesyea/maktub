@@ -1,4 +1,5 @@
-// Emails writers a plain-text copy of all their books.
+// Emails writers a copy of all their books and texts, laid out like a document:
+// the book title, chapter headings, paragraphs, and a break between scenes.
 // mode "me": the signed-in writer asks for a copy now.
 // mode "weekly": the daily schedule; sends to every writer who turned the weekly email on,
 // on the weekday they chose, at most once a day.
@@ -7,23 +8,28 @@ import { createClientFromRequest } from 'npm:@base44/sdk'
 // Used only if the mail service refuses one big email.
 const MAX_CHARS = 400_000
 const DAY_NAMES = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת']
+const ALLOWED = new Set(['p', 'br', 'h2', 'h3', 'strong', 'b', 'em', 'i', 'u', 'blockquote', 'ul', 'ol', 'li', 'hr'])
 
-const ENTITY_MAP: Record<string, string> = { '&nbsp;': ' ', '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&#39;': "'" }
+const esc = (s: string) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+const byOrder = (a: any, b: any) => (a.order ?? 0) - (b.order ?? 0)
+const fullText = (r: any) => (r.content || '') + (Array.isArray(r.content_more) ? r.content_more.join('') : '')
+const words = (html: string) => (html.replace(/<[^>]+>/g, ' ').replace(/&[a-z#0-9]+;/gi, ' ').match(/\S+/g) || []).length
 
-function htmlToText(html: string): string {
-  return (html || '')
-    .replace(/<hr\s*\/?>/gi, '\n* * *\n')
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/(p|h[1-6]|li|blockquote|div)>/gi, '\n')
-    .replace(/<li[^>]*>/gi, '• ')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&(nbsp|amp|lt|gt|quot|#39);/g, (m) => ENTITY_MAP[m] || m)
-    .replace(/\n{3,}/g, '\n\n')
-    .trim()
+/** Keep the writing's own formatting (paragraphs, bold, quotes) and drop everything else, attributes included. */
+function clean(html: string): string {
+  return (html || '').replace(/<(\/?)([a-z0-9]+)\b[^>]*>/gi, (_m, slash, tag) => {
+    const t = tag.toLowerCase()
+    if (!ALLOWED.has(t)) return ''
+    if (t === 'p' && !slash) return '<p style="margin:0 0 12px">'
+    if (t === 'hr') return SCENE_BREAK
+    return `<${slash}${t}>`
+  })
 }
 
-const byOrder = (a: any, b: any) => (a.order ?? 0) - (b.order ?? 0)
-const words = (t: string) => (t.match(/\S+/g) || []).length
+const SCENE_BREAK = '<p style="text-align:center;color:#888;letter-spacing:6px;margin:24px 0">* * *</p>'
+const H1 = 'font-size:26px;margin:0 0 4px;font-weight:900'
+const H2 = 'font-size:20px;margin:36px 0 14px;font-weight:900'
+const SMALL = 'color:#777;font-size:13px;margin:0 0 6px'
 
 function chapterTitle(c: any, n: number | null) {
   if (c.kind === 'prologue') return c.title || 'פרולוג'
@@ -31,13 +37,15 @@ function chapterTitle(c: any, n: number | null) {
   return n ? (c.title ? `פרק ${n}: ${c.title}` : `פרק ${n}`) : (c.title || 'פרק')
 }
 
-async function bookText(entities: any, email: string) {
+async function collect(entities: any, email: string) {
   const q = { created_by: email }
-  const [books, parts, chapters, scenes] = await Promise.all([
+  const [books, parts, chapters, scenes, texts] = await Promise.all([
     entities.Book.filter(q), entities.Part.filter(q), entities.Chapter.filter(q), entities.Scene.filter(q),
+    entities.LooseText.filter(q).catch(() => []),
   ])
-  const out: string[] = []
-  for (const book of books.filter((b: any) => !b.deleted)) {
+  const blocks: string[] = []
+  const liveBooks = books.filter((b: any) => !b.deleted)
+  for (const book of liveBooks) {
     const bookParts = parts.filter((p: any) => p.book_id === book.id && !p.deleted).sort(byOrder)
     const bookChapters = chapters.filter((c: any) => c.book_id === book.id && !c.deleted).sort(byOrder)
     const groups = book.use_parts && bookParts.length
@@ -45,69 +53,73 @@ async function bookText(entities: any, email: string) {
         ...bookParts.map((p: any) => ({ part: p, chapters: bookChapters.filter((c: any) => c.part_id === p.id) }))]
       : [{ part: null, chapters: bookChapters }]
     let n = 0
-    const lines: string[] = []
     let total = 0
+    const body: string[] = []
     for (const g of groups) {
-      if (g.part) lines.push('', `━━━ ${g.part.title || 'חלק'} ━━━`)
+      if (g.part) body.push(`<p style="text-align:center;font-size:18px;font-weight:900;margin:40px 0 0">${esc(g.part.title || 'חלק')}</p>`)
       for (const c of g.chapters) {
         const numbered = !c.kind || c.kind === 'chapter'
         if (numbered && !c.unused) n += 1
-        lines.push('', '', `■ ${chapterTitle(c, numbered && !c.unused ? n : null)}${c.unused ? ' (לא בשימוש)' : ''}`, '')
         const sc = scenes.filter((s: any) => s.chapter_id === c.id && !s.deleted).sort(byOrder)
+        const parts: string[] = [`<h2 style="${H2}">${esc(chapterTitle(c, numbered && !c.unused ? n : null))}${c.unused ? ' <span style="color:#999;font-size:14px">(לא בשימוש)</span>' : ''}</h2>`]
         sc.forEach((s: any, i: number) => {
-          if (i > 0) lines.push('', '* * *', '')
-          if (s.title && sc.length > 1) lines.push(`[${s.title}]`)
-          const t = htmlToText((s.content || '') + (Array.isArray(s.content_more) ? s.content_more.join('') : ''))
-          total += words(t)
-          lines.push(t || '(ריקה)')
+          const html = fullText(s)
+          if (!c.unused && !s.unused) total += words(html)
+          if (i > 0) parts.push(SCENE_BREAK)
+          if (s.title && sc.length > 1) parts.push(`<p style="${SMALL}">${esc(s.title)}</p>`)
+          parts.push(clean(html) || '<p style="color:#999">(ריקה)</p>')
         })
+        body.push(parts.join(''))
       }
     }
-    out.push(`════════ ${book.title || 'ספר'} ════════\n${total.toLocaleString('he-IL')} מילים${lines.join('\n')}`)
+    blocks.push(`<h1 style="${H1}">${esc(book.title || 'ספר')}</h1><p style="${SMALL}">${total.toLocaleString('he-IL')} מילים</p>`)
+    blocks.push(...body)
+    blocks.push('<hr style="border:0;border-top:2px solid #222;margin:48px 0">')
   }
-  // Texts written outside any book.
-  const texts = (await entities.LooseText.filter(q).catch(() => [])).filter((t: any) => !t.deleted)
-  if (texts.length) {
-    const parts = texts.map((t: any) => {
-      const body = htmlToText((t.content || '') + (Array.isArray(t.content_more) ? t.content_more.join('') : ''))
-      return `■ ${t.title || 'בלי כותרת'}${t.description ? `\n${t.description}` : ''}\n\n${body || '(ריק)'}`
-    })
-    out.push(`════════ טקסטים ════════\n\n${parts.join('\n\n* * *\n\n')}`)
+  const liveTexts = texts.filter((t: any) => !t.deleted)
+  if (liveTexts.length) {
+    blocks.push(`<h1 style="${H1}">טקסטים</h1><p style="${SMALL}">מה שנכתב מחוץ לספרים</p>`)
+    for (const t of liveTexts) {
+      blocks.push(`<h2 style="${H2}">${esc(t.title || 'בלי כותרת')}</h2>${t.description ? `<p style="${SMALL}">${esc(t.description)}</p>` : ''}${clean(fullText(t)) || '<p style="color:#999">(ריק)</p>'}`)
+    }
   }
-  return out.join('\n\n\n')
+  return { blocks, books: liveBooks, texts: liveTexts.length }
 }
 
-function split(text: string): string[] {
-  if (text.length <= MAX_CHARS) return [text]
-  const parts: string[] = []
-  let rest = text
-  while (rest.length > MAX_CHARS) {
-    let cut = rest.lastIndexOf('\n', MAX_CHARS)
-    if (cut < MAX_CHARS / 2) cut = MAX_CHARS
-    parts.push(rest.slice(0, cut))
-    rest = rest.slice(cut)
+function wrap(inner: string) {
+  return `<div dir="rtl" style="direction:rtl;text-align:right;font-family:Arial,'Segoe UI',sans-serif;font-size:16px;line-height:1.75;color:#141518;max-width:720px">${inner}</div>`
+}
+
+function chunks(blocks: string[]): string[] {
+  const out: string[] = []
+  let cur = ''
+  for (const b of blocks) {
+    if (cur && cur.length + b.length > MAX_CHARS) { out.push(cur); cur = '' }
+    cur += b
   }
-  parts.push(rest)
-  return parts
+  if (cur) out.push(cur)
+  return out
 }
 
 async function sendTo(base44: any, entities: any, email: string) {
-  const text = await bookText(entities, email)
-  if (!text.trim()) return 0
+  const { blocks, books, texts } = await collect(entities, email)
+  if (!blocks.length) return 0
   const date = new Date().toLocaleDateString('he-IL', { timeZone: 'Asia/Jerusalem', day: 'numeric', month: 'long', year: 'numeric' })
-  const intro = `שלום,\nזה הגיבוי של הספרים שלך ממכתוב, נכון ל־${date}.\nכל הטקסט נמצא במייל הזה, מסודר לפי פרקים. אם תוכנת המייל מקצרת אותו, לוחצים על ״הצגת ההודעה המלאה״ בתחתית.\n\n`
-  const send = (subject: string, body: string) => base44.asServiceRole.integrations.Core.SendEmail({ to: email, subject, body, from_name: 'מכתוב' })
+  const what = books.length === 1 ? `"${esc(books[0].title || 'הספר')}"` : books.length > 1 ? `${books.length} הספרים שלך` : ''
+  const intro = `<p style="color:#555;margin:0 0 28px">זה הגיבוי של ${what}${what && texts ? ' ו' : ''}${texts ? 'הטקסטים שלך' : ''} ממכתוב, נכון ל־${date}. אפשר להעתיק את כל המייל לוורד או לגוגל דוקס, והעיצוב נשמר.</p>`
+  const subject = books.length === 1 ? `גיבוי: ${books[0].title || 'הספר'} · ${date}` : `גיבוי מכתוב · ${date}`
+  const send = (subj: string, html: string) => base44.asServiceRole.integrations.Core.SendEmail({ to: email, subject: subj, body: wrap(html), from_name: 'מכתוב' })
   // One email with everything. Only if the mail service refuses it as too large, send it in parts.
   try {
-    await send(`גיבוי מכתוב · ${date}`, intro + text)
+    await send(subject, intro + blocks.join(''))
     return 1
   } catch (e) {
     if (!/size|large|limit|too long|413/i.test(String((e as Error)?.message || e))) throw e
-    const chunks = split(text)
-    for (let i = 0; i < chunks.length; i++) {
-      await send(`גיבוי מכתוב · ${date} (חלק ${i + 1} מתוך ${chunks.length})`, (i === 0 ? intro : '') + chunks[i])
+    const parts = chunks(blocks)
+    for (let i = 0; i < parts.length; i++) {
+      await send(`${subject} (חלק ${i + 1} מתוך ${parts.length})`, (i === 0 ? intro : '') + parts[i])
     }
-    return chunks.length
+    return parts.length
   }
 }
 
