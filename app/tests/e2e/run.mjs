@@ -95,6 +95,34 @@ await test('create a new book and land in the editor', async (page) => {
 })
 
 // ---------------------------------------------------------------- Writing and saving
+await test('a very long scene saves (server limits each field to ~20,000 characters)', async (page) => {
+  await openBook(page)
+  const ed = editorOf(page, 's2')
+  await ed.click()
+  await page.keyboard.press('Control+End')
+  await page.evaluate(() => {
+    const para = 'היא עמדה ליד החלון והביטה ברחוב הריק, חושבת על כל מה שלא נאמר. 🙂 '
+    const text = Array.from({ length: 400 }, (_, i) => `${i + 1}. ` + para.repeat(5)).join('\n\n') + '\n\nסוף הסצנה הארוכה'
+    const dt = new DataTransfer(); dt.setData('text/plain', text)
+    document.querySelector('.ProseMirror[data-scene-id="s2"]').dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true }))
+  })
+  await waitSaved(page)
+  await sleep(300)
+  const raw = (await store(page, 'Scene')).find((s) => s.id === 's2')
+  assert(raw.content.length <= 19000 && raw.content_more.length >= 5, 'stored in pieces, got ' + raw.content.length + ' + ' + raw.content_more?.length)
+  assert(raw.content_more.every((x) => x.length <= 19000), 'every piece under the limit')
+  await page.reload()
+  await page.waitForSelector('.ProseMirror[data-scene-id="s2"]')
+  const t = await editorOf(page, 's2').innerText()
+  assert(t.includes('סוף הסצנה הארוכה') && t.includes('400. '), 'whole text after reload')
+  // Shortening the scene again clears the extra pieces.
+  await editorOf(page, 's2').click()
+  await page.keyboard.press('Control+a'); await page.keyboard.type('קצר')
+  await waitSaved(page); await sleep(300)
+  const short = (await store(page, 'Scene')).find((s) => s.id === 's2')
+  assert(short.content === '<p>קצר</p>' && short.content_more.length === 0, 'pieces cleared, got ' + short.content.slice(0, 40))
+})
+
 await test('typing saves, counts typed words, survives reload', async (page) => {
   await openBook(page)
   const ed = editorOf(page, 's2')

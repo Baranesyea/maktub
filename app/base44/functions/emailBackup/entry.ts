@@ -57,7 +57,7 @@ async function bookText(entities: any, email: string) {
         sc.forEach((s: any, i: number) => {
           if (i > 0) lines.push('', '* * *', '')
           if (s.title && sc.length > 1) lines.push(`[${s.title}]`)
-          const t = htmlToText(s.content || '')
+          const t = htmlToText((s.content || '') + (Array.isArray(s.content_more) ? s.content_more.join('') : ''))
           total += words(t)
           lines.push(t || '(ריקה)')
         })

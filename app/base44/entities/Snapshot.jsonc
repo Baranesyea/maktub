@@ -1,21 +1,27 @@
 {
   "name": "Snapshot",
-  "type": "object",
   "properties": {
     "book_id": {
-      "type": "string"
-    },
-    "scene_id": {
       "type": "string"
     },
     "content": {
       "type": "string"
     },
-    "word_count": {
-      "type": "number"
+    "content_more": {
+      "description": "The rest of a long text: the server limits each text field to about 20,000 characters",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
     },
     "reason": {
       "type": "string"
+    },
+    "scene_id": {
+      "type": "string"
+    },
+    "word_count": {
+      "type": "number"
     }
   },
   "required": [
@@ -23,14 +29,15 @@
   ],
   "rls": {
     "create": true,
+    "delete": {
+      "created_by": "{{user.email}}"
+    },
     "read": {
       "created_by": "{{user.email}}"
     },
     "update": {
       "created_by": "{{user.email}}"
-    },
-    "delete": {
-      "created_by": "{{user.email}}"
     }
-  }
+  },
+  "type": "object"
 }

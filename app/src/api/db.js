@@ -30,6 +30,63 @@ function sortBy(list, sort) {
   })
 }
 
+// The server refuses any single text field longer than about 20,000 characters
+// (roughly 3,000 Hebrew words). Long scene text is stored as the first piece in
+// `content` and the rest in `content_more`, and joined back on every read.
+export const FIELD_LIMIT = 19000
+const PIECE = 15000
+const LONG_FIELDS = { Scene: 'content', Snapshot: 'content' }
+
+export function splitLong(text, size = PIECE) {
+  const out = []
+  let i = 0
+  while (i < text.length) {
+    let end = Math.min(i + size, text.length)
+    // Never cut between the two halves of an emoji.
+    if (end < text.length && /[\uDC00-\uDFFF]/.test(text[end])) end -= 1
+    out.push(text.slice(i, end))
+    i = end
+  }
+  return out
+}
+
+export function packLong(name, data) {
+  const f = LONG_FIELDS[name]
+  if (!f || !data || typeof data[f] !== 'string') return data
+  const [first = '', ...rest] = splitLong(data[f])
+  return { ...data, [f]: first, [`${f}_more`]: rest }
+}
+
+export function unpackLong(name, rec) {
+  const f = LONG_FIELDS[name]
+  if (!f || !rec || typeof rec !== 'object') return rec
+  const more = rec[`${f}_more`]
+  const { [`${f}_more`]: _drop, ...out } = rec
+  if (Array.isArray(more) && more.length) out[f] = (rec[f] || '') + more.join('')
+  return out
+}
+
+// If the server did not keep every piece, fail loudly so the outbox keeps the text and retries.
+function stored(sent, rec) {
+  const more = sent?.content_more
+  if (Array.isArray(more) && more.length && rec && typeof rec === 'object' && (rec.content_more || []).length !== more.length) {
+    throw new Error('long text was not fully stored')
+  }
+  return rec
+}
+
+function tooLong(data) {
+  for (const [k, v] of Object.entries(data || {})) {
+    const list = Array.isArray(v) ? v : [v]
+    if (list.some((x) => typeof x === 'string' && x.length > FIELD_LIMIT)) {
+      const e = new Error(`Field '${k}' exceeds the maximum allowed size.`)
+      e.status = 400
+      return e
+    }
+  }
+  return null
+}
+
 function offlineError() {
   const e = new Error('offline')
   e.offline = true
@@ -37,6 +94,21 @@ function offlineError() {
 }
 
 function mockEntity(name) {
+  const store = mockStore(name)
+  const un = (r) => unpackLong(name, r)
+  const pack = (d) => { const p = packLong(name, sanitize(d)); const e = tooLong(p); if (e) throw e; return p }
+  return {
+    filter: async (q, s, l) => (await store.filter(q, s, l)).map(un),
+    list: async (s, l) => (await store.list(s, l)).map(un),
+    get: async (id) => un(await store.get(id)),
+    create: async (d) => { const p = pack(d); return un(await store.create(p)) },
+    bulkCreate: async (l) => { const ps = l.map(pack); return (await store.bulkCreate(ps)).map(un) },
+    update: async (id, d) => { const p = pack(d); return un(await store.update(id, p)) },
+    delete: (id) => store.delete(id),
+  }
+}
+
+function mockStore(name) {
   const key = `maktub_mock_${name}`
   const read = () => { try { return JSON.parse(localStorage.getItem(key) || '[]') } catch { return [] } }
   const write = (rows) => localStorage.setItem(key, JSON.stringify(rows))
@@ -102,13 +174,15 @@ function realEntity(name) {
     if (method === 'bulkCreate' && !handler.bulkCreate) return Promise.all(args[0].map((d) => handler.create(d)))
     return handler[method](...args)
   }
+  const un = (r) => unpackLong(name, r)
+  const pack = (d) => packLong(name, sanitize(d))
   return {
-    filter: (q, s, l) => call('filter', q, s, l),
-    list: (s, l) => call('list', s, l),
-    get: (id) => call('get', id),
-    create: (d) => call('create', sanitize(d)),
-    bulkCreate: (l) => call('bulkCreate', l.map(sanitize)),
-    update: (id, d) => call('update', id, sanitize(d)),
+    filter: async (q, s, l) => (await call('filter', q, s, l)).map(un),
+    list: async (s, l) => (await call('list', s, l)).map(un),
+    get: async (id) => un(await call('get', id)),
+    create: async (d) => { const p = pack(d); return un(stored(p, await call('create', p))) },
+    bulkCreate: async (l) => { const ps = l.map(pack); const rs = await call('bulkCreate', ps); return rs.map((r, i) => un(stored(ps[i], r))) },
+    update: async (id, d) => { const p = pack(d); return un(stored(p, await call('update', id, p))) },
     delete: (id) => call('delete', id),
   }
 }

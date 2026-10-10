@@ -1,6 +1,5 @@
 {
   "name": "Scene",
-  "type": "object",
   "properties": {
     "book_id": {
       "type": "string"
@@ -8,56 +7,63 @@
     "chapter_id": {
       "type": "string"
     },
-    "title": {
-      "type": "string"
-    },
-    "summary": {
-      "type": "string"
+    "character_ids": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
     },
     "content": {
       "type": "string"
     },
-    "word_count": {
+    "content_more": {
+      "description": "The rest of a long text: the server limits each text field to about 20,000 characters",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "deleted": {
+      "default": false,
+      "type": "boolean"
+    },
+    "deleted_at": {
+      "type": "string"
+    },
+    "order": {
       "type": "number"
     },
     "status": {
-      "type": "string",
+      "default": "idea",
       "enum": [
         "idea",
         "draft",
         "editing",
         "done"
       ],
-      "default": "idea"
-    },
-    "order": {
-      "type": "number"
-    },
-    "unused": {
-      "type": "boolean",
-      "default": false
-    },
-    "tags": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "character_ids": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
+      "type": "string"
     },
     "story_time": {
       "type": "object"
     },
-    "deleted": {
-      "type": "boolean",
-      "default": false
-    },
-    "deleted_at": {
+    "summary": {
       "type": "string"
+    },
+    "tags": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "title": {
+      "type": "string"
+    },
+    "unused": {
+      "default": false,
+      "type": "boolean"
+    },
+    "word_count": {
+      "type": "number"
     }
   },
   "required": [
@@ -66,14 +72,15 @@
   ],
   "rls": {
     "create": true,
+    "delete": {
+      "created_by": "{{user.email}}"
+    },
     "read": {
       "created_by": "{{user.email}}"
     },
     "update": {
       "created_by": "{{user.email}}"
-    },
-    "delete": {
-      "created_by": "{{user.email}}"
     }
-  }
+  },
+  "type": "object"
 }
