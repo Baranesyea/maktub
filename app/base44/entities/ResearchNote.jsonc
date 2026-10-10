@@ -1,23 +1,70 @@
 {
   "name": "ResearchNote",
-  "type": "object",
   "properties": {
-    "book_id": { "type": "string" },
-    "title": { "type": "string" },
-    "content": { "type": "string", "description": "Rich text" },
-    "content_more": { "type": "array", "items": { "type": "string" }, "description": "The rest of a long text: the server limits each text field to about 20,000 characters" },
-    "tags": { "type": "array", "items": { "type": "string" } },
-    "link_chapter_id": { "type": "string" },
-    "link_scene_id": { "type": "string" },
-    "character_ids": { "type": "array", "items": { "type": "string" } },
-    "order": { "type": "number" },
-    "deleted": { "type": "boolean", "default": false }
+    "attachments": {
+      "description": "Files and pictures: id, kind (image or file), name, uri, thumb_uri, width, height, type, size",
+      "items": {
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "book_id": {
+      "type": "string"
+    },
+    "character_ids": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "content": {
+      "description": "Rich text",
+      "type": "string"
+    },
+    "content_more": {
+      "description": "The rest of a long text: the server limits each text field to about 20,000 characters",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "deleted": {
+      "default": false,
+      "type": "boolean"
+    },
+    "link_chapter_id": {
+      "type": "string"
+    },
+    "link_scene_id": {
+      "type": "string"
+    },
+    "order": {
+      "type": "number"
+    },
+    "tags": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "title": {
+      "type": "string"
+    }
   },
-  "required": ["book_id"],
+  "required": [
+    "book_id"
+  ],
+  "type": "object",
   "rls": {
     "create": true,
-    "read": { "created_by": "{{user.email}}" },
-    "update": { "created_by": "{{user.email}}" },
-    "delete": { "created_by": "{{user.email}}" }
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "update": {
+      "created_by": "{{user.email}}"
+    },
+    "delete": {
+      "created_by": "{{user.email}}"
+    }
   }
 }

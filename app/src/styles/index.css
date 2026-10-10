@@ -152,11 +152,11 @@ button { -webkit-user-select: none; user-select: none; }
   font-family: var(--write-font);
   font-weight: var(--write-weight, 300);
   font-size: var(--write-size);
-  line-height: 1.85;
+  line-height: 1.65;
   color: var(--fg);
 }
 .prose-write .ProseMirror { outline: none; min-height: 3em; caret-color: var(--accent); }
-.prose-write .ProseMirror p { margin: 0 0 0.85em; }
+.prose-write .ProseMirror p { margin: 0 0 0.5em; }
 .prose-write .ProseMirror p.is-editor-empty:first-child::before,
 .prose-write .ProseMirror p.is-empty:first-child::before {
   content: attr(data-placeholder);
@@ -174,9 +174,9 @@ button { -webkit-user-select: none; user-select: none; }
 .prose-write hr { border: none; text-align: center; margin: 1.4em 0; height: 1.4em; }
 .prose-write hr::after { content: '* * *'; color: var(--muted); letter-spacing: 0.4em; }
 .prose-write ul, .prose-write ol { padding-inline-start: 1.5em; margin: 0 0 0.85em; }
-.prose-write.indent-first .ProseMirror p { margin-bottom: 0.15em; }
+.prose-write.indent-first .ProseMirror p { margin-bottom: 0; }
 .prose-write.indent-first .ProseMirror p + p { text-indent: 1.4em; }
-.prose-write.para-spaced .ProseMirror p { margin-bottom: 0.85em; }
+.prose-write.para-spaced .ProseMirror p { margin-bottom: 0.6em; }
 .prose-write mark { background: color-mix(in srgb, var(--fg) 14%, transparent); color: inherit; border-radius: 2px; padding: 0 1px; }
 
 /* Note anchors inside the text */
@@ -245,3 +245,16 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--accent); }
 
 /* The chapter name above the text: a soft hint when it is empty. */
 .chapter-title-edit:empty::before { content: attr(data-placeholder); color: var(--faint); }
+
+/* A name typed in place (research, pictures): calm, with a thin line under it while typing
+   instead of the thick focus frame. */
+.title-field { background: transparent; font-weight: 700; padding: 4px 0; border: 0; border-bottom: 1px solid transparent; border-radius: 0; }
+.title-field:hover { border-bottom-color: var(--line); }
+.title-field:focus, .title-field:focus-visible { outline: none; border-bottom-color: var(--line-strong); }
+.title-field::placeholder { font-weight: 400; color: var(--faint); }
+
+/* Texts are short pieces: tighter lines and paragraphs than the book's page. */
+.texts-writing .prose-write { line-height: 1.6; }
+.texts-writing .prose-write .ProseMirror p,
+.texts-writing .prose-write.para-spaced .ProseMirror p,
+.texts-writing .prose-write.indent-first .ProseMirror p { margin-bottom: 0.3em; }

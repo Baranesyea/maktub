@@ -52,6 +52,12 @@ export function useOnScreenKeyboard() {
   return state
 }
 
+// When the caret moved by typing or with the keyboard, typewriter scrolling follows it; a mouse click
+// somewhere in the text does not make the page jump.
+let lastKey = 0
+if (typeof window !== 'undefined') window.addEventListener('keydown', () => { lastKey = Date.now() }, true)
+export const movedByKeyboard = () => Date.now() - lastKey < 400
+
 /** Keep the caret at a fixed height in the visible area (typewriter scrolling). */
 export function keepCaretInView(editor, scroller, { ratio = 0.42, visibleTop = 0, visibleHeight } = {}) {
   if (!editor || !scroller) return

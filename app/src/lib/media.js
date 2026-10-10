@@ -40,7 +40,7 @@ export async function uploadPrivate(blob, name = 'image.webp') {
     localStorage.setItem(MOCK_KEY, JSON.stringify(files))
     return uri
   }
-  const file = new File([blob], name, { type: blob.type || 'image/webp' })
+  const file = blob instanceof File ? blob : new File([blob], name, { type: blob.type || 'application/octet-stream' })
   const { file_uri } = await (await core()).UploadPrivateFile({ file })
   return file_uri
 }

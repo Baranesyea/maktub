@@ -53,6 +53,8 @@ const EMPTY = { book: null, parts: [], chapters: [], scenes: [], notes: [], char
 // Books already loaded in this visit. Moving between screens shows them at once
 // and refreshes from the server quietly, instead of a loading screen every time.
 const cache = new Map()
+/** Something changed a book from outside its screens (a text moved into it): load it fresh next time. */
+export const forgetBook = (bookId) => cache.delete(bookId)
 
 export function useBook(bookId) {
   const [data, setData] = useState(() => cache.get(bookId) || EMPTY)

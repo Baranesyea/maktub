@@ -4,7 +4,7 @@ import { useNavigate, useParams, useSearchParams, Link } from 'react-router-dom'
 import { Menu as MenuIcon, PanelLeft, Maximize2, Minimize2, BookOpen, Search, MoreVertical, Home, LayoutGrid, FileText, Upload, Download, CalendarClock, Clock, Trash2, Settings, HelpCircle, Check, X, Layers, Undo2, Lightbulb, History, Images, BookMarked } from 'lucide-react'
 import { useBook } from '@/hooks/useBook'
 import { useSettings } from '@/lib/settings'
-import { useLayoutMode, useOnScreenKeyboard, keepCaretInView } from '@/hooks/useViewport'
+import { useLayoutMode, useOnScreenKeyboard, keepCaretInView, movedByKeyboard } from '@/hooks/useViewport'
 import BookTree from '@/components/BookTree'
 import ChapterView from '@/components/ChapterView'
 import SidePanel from '@/components/SidePanel'
@@ -177,16 +177,18 @@ export default function Workspace() {
   }, [])
   const onSceneFocus = useCallback((id, ed) => { setSceneId(id); setActiveEditor(ed) }, [])
 
-  // Typewriter scrolling (focus mode, iPad keyboard mode).
+  // Typewriter scrolling: the line being written stays at the same height on screen
+  // (whenever the setting is on, and always with the iPad keyboard).
   useEffect(() => {
     if (!activeEditor) return
     const fn = () => {
-      if (!(focusMode && settings.typewriter) && !kb.open) return
+      if (!settings.typewriter && !kb.open) return
+      if (!movedByKeyboard()) return
       keepCaretInView(activeEditor, chapterRef.current?.scroller(), kb.open ? { ratio: 0.45, visibleTop: kb.top, visibleHeight: kb.height - 48 } : { ratio: 0.42 })
     }
     activeEditor.on('selectionUpdate', fn); activeEditor.on('update', fn)
     return () => { activeEditor.off('selectionUpdate', fn); activeEditor.off('update', fn) }
-  }, [activeEditor, focusMode, settings.typewriter, kb.open, kb.top, kb.height])
+  }, [activeEditor, settings.typewriter, kb.open, kb.top, kb.height])
 
   // ---------- Notes ----------
   const editorFor = (sid) => editors.current.get(sid)

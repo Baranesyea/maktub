@@ -7,6 +7,7 @@ import { useBook } from '@/hooks/useBook'
 import { Page, Loading } from '@/components/AppShell'
 import { Button, inputClass } from '@/components/ui'
 import NoteEditor from '@/components/editor/NoteEditor'
+import Attachments from '@/components/Attachments'
 import { LinkPicker, CharacterPicker, toLink, fromLink } from '@/components/Links'
 import { linkLabel } from '@/pages/Inspiration'
 import { htmlToText } from '@/lib/text'
@@ -37,10 +38,10 @@ export function ResearchDetail({ bk, note, compact = false, onDeleted }) {
   return (
     <div className={cn('flex flex-col', compact ? 'gap-3' : 'gap-4')}>
       <input
-        className={cn('w-full bg-transparent outline-none font-black placeholder:text-faint', compact ? 'text-lg' : 'text-2xl sm:text-[28px]')}
+        className={cn('title-field w-full', compact ? 'text-base' : 'text-xl')}
         defaultValue={note.title || ''}
         key={`t-${note.id}`}
-        placeholder="נושא המחקר"
+        placeholder="על מה המחקר?"
         onChange={(e) => bk.update('research', note.id, { title: e.target.value })}
         aria-label="נושא"
         data-testid="research-title"
@@ -51,6 +52,7 @@ export function ResearchDetail({ bk, note, compact = false, onDeleted }) {
         <LinkPicker bk={bk} value={fromLink(note)} onChange={(v) => bk.update('research', note.id, toLink(v))} testid="research-link" className="max-w-sm" />
         <CharacterPicker bk={bk} value={note.character_ids || []} onChange={(ids) => bk.update('research', note.id, { character_ids: ids })} testid="research-people" />
       </div>
+      <Attachments value={note.attachments || []} onChange={(list) => bk.update('research', note.id, { attachments: list }, { delay: 100 })} compact={compact} testid="research-files" />
       <NoteEditor key={note.id} value={note.content} onChange={(html) => bk.update('research', note.id, { content: html })} compact={compact}
         placeholder="מה גילית? עובדות, ציטוטים, מקורות וקישורים." testid="research-notes" />
       {onDeleted && (

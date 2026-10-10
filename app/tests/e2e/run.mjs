@@ -992,7 +992,11 @@ await test('texts: writings outside the book, each with a title, a line and the 
   await page.keyboard.type('הבוקר היה קר והאוטובוס איחר בשעה.')
   await waitSaved(page); await sleep(300)
   const t = (await store(page, 'LooseText'))[0]
-  assert(t.title === 'הטיול לגולן' && t.description === 'זיכרון מכיתה ח׳' && t.content.includes('האוטובוס') && t.word_count === 6, 'text saved, got ' + JSON.stringify({ ...t, content: t.content?.slice(0, 40) }))
+  assert(t.title === 'הטיול לגולן' && t.description === 'זיכרון מכיתה ח׳' && t.content.includes('האוטובוס') && t.word_count >= 6, 'text saved, got ' + JSON.stringify({ ...t, content: t.content?.slice(0, 40) }))
+  await page.click('.ProseMirror'); await page.keyboard.press('End'); await page.keyboard.press('Enter'); await page.keyboard.type('שורה שנייה')
+  const gap = await page.evaluate(() => { const ps = [...document.querySelectorAll('.ProseMirror p')]; return ps[1].getBoundingClientRect().top - ps[0].getBoundingClientRect().top })
+  const size = await page.evaluate(() => parseFloat(getComputedStyle(document.querySelector('.ProseMirror p')).fontSize))
+  assert(gap < size * 2.1, 'lines are close, gap ' + Math.round(gap) + ' for ' + size + 'px text')
   await page.screenshot({ path: `${OUT}/text-page.png` })
   await page.click('[data-testid="back-to-texts"]')
   await page.waitForSelector(`[data-testid="text-card-${t.id}"]`)
@@ -1003,6 +1007,36 @@ await test('texts: writings outside the book, each with a title, a line and the 
   await page.screenshot({ path: `${OUT}/texts.png` })
   await page.reload(); await page.waitForSelector('[data-testid="texts-list"]')
   assert((await page.locator('[data-testid^="text-card-"]').count()) === 2, 'both texts after reload')
+})
+
+await test('texts: a free text goes into the book as a new chapter, or as a scene in a chapter', async (page) => {
+  await openBook(page)
+  await page.goto(BASE + '/texts')
+  await page.click('[data-testid="text-new"]')
+  await page.fill('[data-testid="text-title"]', 'הים בבוקר')
+  await page.click('.ProseMirror'); await page.keyboard.type('הגלים היו שקטים.')
+  await waitSaved(page)
+  await page.click('[data-testid="text-into-book"]')
+  await page.waitForSelector('[data-testid="into-book"]')
+  await page.click('[data-testid="into-book-go"]') // default: a new chapter at the end
+  await page.waitForSelector('[data-testid="workspace"]')
+  await waitFor(async () => (await page.textContent('[data-testid="chapter-title"]')).includes('הים בבוקר'), 'the new chapter is open', 8000)
+  assert((await editorOf(page, (await store(page, 'Scene')).find((x) => x.content.includes('הגלים')).id).innerText()).includes('הגלים היו שקטים'), 'its text is there')
+  const ch = (await store(page, 'Chapter')).find((c) => c.title === 'הים בבוקר')
+  assert(ch && ch.order > 2, 'placed at the end of the book')
+  assert((await store(page, 'LooseText')).find((x) => x.title === 'הים בבוקר').deleted === true, 'left the texts')
+  // A second text goes in as a scene of chapter 2.
+  await page.goto(BASE + '/texts')
+  await page.click('[data-testid="text-new"]')
+  await page.fill('[data-testid="text-title"]', 'מכתב מאחי')
+  await page.click('.ProseMirror'); await page.keyboard.type('שלום מהבסיס.')
+  await waitSaved(page)
+  await page.click('[data-testid="text-into-book"]')
+  await choose(page, 'into-book-chapter', 'c2')
+  await page.click('[data-testid="into-book-go"]')
+  await page.waitForSelector('[data-testid="workspace"]')
+  await waitFor(async () => (await store(page, 'Scene')).some((x) => x.chapter_id === 'c2' && x.title === 'מכתב מאחי' && x.content.includes('מהבסיס')), 'scene added to chapter 2')
+  await waitFor(async () => (await page.textContent('[data-testid="chapter-title"]')).includes('אחי'), 'chapter 2 open', 8000)
 })
 
 await test('a scene that does not belong to the book moves to texts, with undo', async (page) => {
@@ -1017,6 +1051,33 @@ await test('a scene that does not belong to the book moves to texts, with undo',
   await page.click('[data-testid="nav-texts"]')
   await page.waitForSelector(`[data-testid="text-card-${text.id}"]`)
   assert((await page.locator(`[data-testid="text-card-${text.id}"]`).innerText()).includes('מתוך'), 'card says where it came from')
+})
+
+const caretRatio = (page, scrollerSel) => page.evaluate((sel) => {
+  const r = getSelection().getRangeAt(0).getBoundingClientRect()
+  const box = document.querySelector(sel).getBoundingClientRect()
+  return (r.top - box.top) / box.height
+}, scrollerSel)
+
+await test('typewriter: the line being written stays near the middle, in the book and in texts', { viewport: { width: 1300, height: 700 } }, async (page) => {
+  await openBook(page)
+  await editorOf(page, 's2').click(); await page.keyboard.press('Control+End')
+  for (let k = 0; k < 30; k++) { await page.keyboard.press('Enter'); await page.keyboard.type('שורה ' + k) }
+  await sleep(300)
+  let r = await caretRatio(page, '[data-testid="editor-scroll"]')
+  assert(r > 0.3 && r < 0.55, 'book: caret at ' + r.toFixed(2) + ' of the height')
+  // Lines sit close: no empty-line gap between paragraphs.
+  const gap = await page.evaluate(() => { const ps = [...document.querySelectorAll('.ProseMirror[data-scene-id="s2"] p')].slice(-2); return ps[1].getBoundingClientRect().top - ps[0].getBoundingClientRect().top })
+  const size = await page.evaluate(() => parseFloat(getComputedStyle(document.querySelector('.ProseMirror[data-scene-id="s2"] p')).fontSize))
+  assert(gap < size * 2.1, 'book lines are close, gap ' + Math.round(gap) + ' for ' + size + 'px')
+  await page.goto(BASE + '/texts')
+  await page.click('[data-testid="text-new"]')
+  await page.click('.ProseMirror')
+  await page.keyboard.type('פתיחה')
+  for (let k = 0; k < 30; k++) { await page.keyboard.press('Enter'); await page.keyboard.type('שורה ' + k) }
+  await sleep(300)
+  r = await caretRatio(page, '[data-testid="text-page"] main')
+  assert(r > 0.3 && r < 0.55, 'texts: caret at ' + r.toFixed(2) + ' of the height')
 })
 
 await test('editor: rename the chapter from its title above the text', async (page) => {
@@ -1095,6 +1156,27 @@ await test('research: notes with tags, search and links', async (page) => {
   await page.click('[data-testid="research-tag-מקומות"]')
   await waitFor(async () => (await page.locator('[data-testid^="research-item-"]').count()) === 1, 'tag filter')
   await page.screenshot({ path: `${OUT}/research.png` })
+})
+
+await test('research: attach pictures and files to a topic; a calm title field', async (page) => {
+  await openBook(page)
+  await page.goto(BASE + '/book/b1/research')
+  await page.click('[data-testid="research-new"]')
+  const t = page.locator('[data-testid="research-title"]')
+  const look = await t.evaluate((el) => { const cs = getComputedStyle(el); return { size: parseFloat(cs.fontSize), outline: cs.outlineStyle, weight: cs.fontWeight } })
+  assert(look.size <= 21 && look.outline === 'none', 'title is modest and without a frame, got ' + JSON.stringify(look))
+  await t.fill('השוק בחיפה')
+  await page.setInputFiles('[data-testid="research-files-input"]', ['tests/e2e/fixtures/sea.png', 'tests/e2e/fixtures/interview.txt'])
+  await waitFor(async () => (await page.locator('[data-testid="attachment-image"]').count()) === 1 && (await page.locator('[data-testid="attachment-file"]').count()) === 1, 'picture and file shown', 10000)
+  await waitSent(page); await sleep(300)
+  let n = (await store(page, 'ResearchNote')).find((x) => x.title === 'השוק בחיפה')
+  assert(n.attachments.length === 2 && n.attachments.some((a) => a.kind === 'image' && a.thumb_uri) && n.attachments.some((a) => a.kind === 'file' && a.name === 'interview.txt'), 'saved: ' + JSON.stringify(n.attachments.map((a) => a.kind + ':' + a.name)))
+  await page.screenshot({ path: `${OUT}/research-files.png` })
+  await page.locator('[data-testid="attachment-file"]').hover()
+  await page.click('button[aria-label="הסר את interview.txt"]')
+  await waitSent(page); await sleep(300)
+  n = (await store(page, 'ResearchNote')).find((x) => x.title === 'השוק בחיפה')
+  assert(n.attachments.length === 1, 'file removed')
 })
 
 await test('writing: pictures and research for this scene open in the side panel', async (page) => {

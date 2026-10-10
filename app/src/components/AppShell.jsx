@@ -76,7 +76,6 @@ export function Rail() {
       <NavLink to="/" className="shrink-0 mb-3 mt-1 short:mb-1.5 short:mt-0 text-white" aria-label="מכתוב, מסך הבית"><LogoMark size={34} /></NavLink>
       <div className="flex-1 min-h-0 w-full flex flex-col items-center gap-1 short:gap-0.5 overflow-y-auto no-scrollbar">
       <RailLink to="/" end icon={HomeIcon} label="בית" testid="nav-home" />
-      <RailLink to="/texts" icon={NotebookPen} label="טקסטים" testid="nav-texts" />
       {bookId && (
         <>
           <div className="shrink-0 w-10 h-px bg-white/10 my-1.5 short:my-1" />
@@ -90,6 +89,7 @@ export function Rail() {
         </>
       )}
       <div className="shrink-0 w-10 h-px bg-white/10 my-1.5 short:my-1" />
+      <RailLink to="/texts" icon={NotebookPen} label="טקסטים" testid="nav-texts" />
       <RailLink to="/import" icon={Upload} label="ייבוא" testid="nav-import" />
       </div>
       <div className="shrink-0 flex flex-col items-center gap-1 short:gap-0.5 pt-1">

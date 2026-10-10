@@ -111,7 +111,7 @@ export function PictureDetail({ bk, item, compact = false, onDeleted }) {
           className={cn('w-full', compact ? 'max-h-[260px]' : 'max-h-[62vh]')} data-testid="picture-hero" />
       </div>
       <input
-        className={cn('w-full bg-transparent outline-none font-black placeholder:text-faint', compact ? 'text-lg' : 'text-2xl sm:text-[28px]')}
+        className={cn('title-field w-full', compact ? 'text-base' : 'text-xl')}
         defaultValue={item.title || ''}
         key={`t-${item.id}`}
         placeholder="שם לתמונה"
