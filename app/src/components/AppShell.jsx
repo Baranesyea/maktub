@@ -17,7 +17,7 @@ function RailLink({ to, icon: Icon, label, end, testid, match = true }) {
       end={end}
       data-testid={testid}
       className={({ isActive }) => cn(
-        'relative w-[64px] min-h-[54px] flex flex-col items-center justify-center gap-1 rounded-xl text-[11px] leading-none transition-colors',
+        'relative w-[64px] min-h-[54px] short:min-h-[40px] short:gap-0.5 shrink-0 flex flex-col items-center justify-center gap-1 rounded-xl text-[11px] leading-none transition-colors',
         isActive && match ? 'bg-[var(--rail-active)] text-white' : 'text-[var(--rail-fg)] hover:text-white hover:bg-[var(--rail-hover)]',
       )}
     >
@@ -39,7 +39,7 @@ function BackupRailItem() {
   const ok = save.status === 'saved'
   return (
     <NavLink to="/backup" title={ok ? 'הכול שמור. לחצו להגדרות הגיבוי.' : 'שומר… לחצו להגדרות הגיבוי.'} data-testid="nav-backup"
-      className={({ isActive }) => cn('relative w-[64px] min-h-[54px] flex flex-col items-center justify-center gap-1 rounded-xl text-[11px] leading-none transition-colors', isActive ? 'bg-[var(--rail-active)] text-white' : 'text-[var(--rail-fg)] hover:text-white hover:bg-[var(--rail-hover)]')}>
+      className={({ isActive }) => cn('relative w-[64px] min-h-[54px] short:min-h-[40px] short:gap-0.5 shrink-0 flex flex-col items-center justify-center gap-1 rounded-xl text-[11px] leading-none transition-colors', isActive ? 'bg-[var(--rail-active)] text-white' : 'text-[var(--rail-fg)] hover:text-white hover:bg-[var(--rail-hover)]')}>
       {({ isActive }) => (
         <>
           {isActive && <span className="absolute -right-[6px] top-3 bottom-3 w-[3px] rounded-full bg-white" aria-hidden />}
@@ -56,7 +56,7 @@ function AccountButton() {
   const initial = (user?.full_name || user?.email || '?').trim()[0]?.toUpperCase()
   return (
     <Menu align="end" trigger={
-      <button className="w-10 h-10 rounded-full bg-white/10 text-white text-sm font-black hover:bg-white/20" aria-label="החשבון שלי" data-testid="account-menu">{initial}</button>
+      <button className="w-10 h-10 short:w-9 short:h-9 rounded-full bg-white/10 text-white text-sm font-black hover:bg-white/20" aria-label="החשבון שלי" data-testid="account-menu">{initial}</button>
     }>
       <MenuLabel>{user?.email || 'מחובר'}</MenuLabel>
       <MenuSeparator />
@@ -71,12 +71,14 @@ export function Rail() {
   const m = useMatch('/book/:bookId/*')
   const bookId = m?.params.bookId || settings.last_book_id || null
   return (
-    <nav className="hidden sm:flex shrink-0 w-[80px] h-full flex-col items-center py-3 gap-1 bg-[var(--rail-bg)] z-30" aria-label="ניווט ראשי" data-testid="rail">
-      <NavLink to="/" className="mb-3 mt-1 text-white" aria-label="מכתוב, מסך הבית"><LogoMark size={34} /></NavLink>
+    // On a short window the middle scrolls; backup, settings and the account stay in view.
+    <nav className="hidden sm:flex shrink-0 w-[80px] h-full flex-col items-center py-3 short:py-2 bg-[var(--rail-bg)] z-30 overflow-hidden" aria-label="ניווט ראשי" data-testid="rail">
+      <NavLink to="/" className="shrink-0 mb-3 mt-1 short:mb-1.5 short:mt-0 text-white" aria-label="מכתוב, מסך הבית"><LogoMark size={34} /></NavLink>
+      <div className="flex-1 min-h-0 w-full flex flex-col items-center gap-1 short:gap-0.5 overflow-y-auto no-scrollbar">
       <RailLink to="/" end icon={HomeIcon} label="בית" testid="nav-home" />
       {bookId && (
         <>
-          <div className="w-10 h-px bg-white/10 my-1.5" />
+          <div className="shrink-0 w-10 h-px bg-white/10 my-1.5 short:my-1" />
           <RailLink to={`/book/${bookId}`} end icon={PenLine} label="כתיבה" testid="nav-write" />
           <RailLink to={`/book/${bookId}/plan`} icon={CalendarClock} label="תכנון" testid="nav-plan" />
           <RailLink to={`/book/${bookId}/timeline`} icon={History} label="ציר זמן" testid="nav-timeline" />
@@ -84,12 +86,14 @@ export function Rail() {
           <RailLink to={`/book/${bookId}?ideas=1`} icon={Lightbulb} label="רעיונות" testid="nav-ideas" match={false} />
         </>
       )}
-      <div className="w-10 h-px bg-white/10 my-1.5" />
+      <div className="shrink-0 w-10 h-px bg-white/10 my-1.5 short:my-1" />
       <RailLink to="/import" icon={Upload} label="ייבוא" testid="nav-import" />
-      <div className="flex-1" />
-      <BackupRailItem />
-      <RailLink to="/settings" icon={Settings} label="הגדרות" testid="nav-settings" />
-      <div className="mt-2"><AccountButton /></div>
+      </div>
+      <div className="shrink-0 flex flex-col items-center gap-1 short:gap-0.5 pt-1">
+        <BackupRailItem />
+        <RailLink to="/settings" icon={Settings} label="הגדרות" testid="nav-settings" />
+        <div className="mt-2 short:mt-1"><AccountButton /></div>
+      </div>
     </nav>
   )
 }
@@ -124,10 +128,31 @@ export function MobileNav() {
   )
 }
 
+/** The one loading look: the logo mark, breathing, in the middle of the work area. */
+export function Loading({ label = 'טוען' }) {
+  return (
+    <div className="h-full flex items-center justify-center text-faint" role="status" aria-label={label} data-testid="loading">
+      <span className="animate-pulse"><LogoMark size={36} /></span>
+    </div>
+  )
+}
+
+/** Shown while signing in is checked: the same frame and the same mark as a page that is loading, so a refresh shows one screen, not two. */
+export function BootScreen() {
+  return (
+    <div dir="rtl" className="fixed inset-0 flex bg-surface">
+      <div className="hidden sm:flex shrink-0 w-[80px] h-full flex-col items-center py-3 short:py-2 bg-[var(--rail-bg)]">
+        <span className="mb-3 mt-1 short:mb-1.5 short:mt-0 text-white"><LogoMark size={34} /></span>
+      </div>
+      <div className="flex-1 min-w-0"><Loading /></div>
+    </div>
+  )
+}
+
 /** The frame around every screen except reading mode. */
 export function AppFrame({ children }) {
   return (
-    <div className="h-full flex">
+    <div className="h-full flex overflow-hidden">
       <Rail />
       <div className="flex-1 min-w-0 h-full">{children}</div>
     </div>

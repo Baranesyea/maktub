@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { Loading } from '@/components/AppShell'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { X, List, Pin } from 'lucide-react'
 import { useBook, chapterLabel } from '@/hooks/useBook'
@@ -118,7 +119,7 @@ export default function Reading() {
   const theme = settings.reading_theme || 'paper'
   const cur = chapters.find((c) => c.id === currentCh)
 
-  if (bk.loading) return <div className="h-full flex items-center justify-center text-muted">טוען…</div>
+  if (bk.loading) return <Loading />
 
   return (
     <div className={cn('reading fixed inset-0 flex flex-col', `theme-${theme}`)} onMouseMove={showChrome} onTouchStart={showChrome} data-testid="reading-mode">

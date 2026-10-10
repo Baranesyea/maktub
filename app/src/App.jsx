@@ -6,7 +6,7 @@ import { bindDriveSettings, startDriveLoop } from '@/lib/drive'
 import { useToasts } from '@/lib/toast'
 import { Toasts, Button } from '@/components/ui'
 import Tour from '@/components/Tour'
-import { AppFrame } from '@/components/AppShell'
+import { AppFrame, BootScreen } from '@/components/AppShell'
 import Home from '@/pages/Home'
 import Workspace from '@/pages/Workspace'
 import Reading from '@/pages/Reading'
@@ -45,7 +45,7 @@ function Shell() {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, checkAppState } = useAuth()
   const toasts = useToasts()
   if (isLoadingPublicSettings || isLoadingAuth) {
-    return <div className="fixed inset-0 flex items-center justify-center text-muted">טוען…</div>
+    return <BootScreen />
   }
   if (authError) {
     if (authError.type === 'auth_required') { navigateToLogin(); return null }

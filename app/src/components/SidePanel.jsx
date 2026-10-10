@@ -11,13 +11,13 @@ import { cn } from '@/lib/utils'
 export default function SidePanel({ bk, tab, onTab, scene, chapter, notesProps, onOpenScene, onShowVersions, onClose }) {
   return (
     <Tabs.Root value={tab} onValueChange={onTab} dir="rtl" className="h-full flex flex-col bg-surface" data-tour="side">
-      <div className="flex items-center border-b border-line pe-1">
-        <Tabs.List className="flex flex-1 overflow-x-auto" aria-label="חלונית צד">
+      <div className="h-14 shrink-0 flex items-stretch border-b border-line pe-1">
+        <Tabs.List className="flex flex-1 items-stretch overflow-x-auto" aria-label="חלונית צד">
           {[['notes', 'פתקים'], ['scene', 'סצנה'], ['people', 'דמויות ומקומות']].map(([k, l]) => (
             <Tabs.Trigger key={k} value={k} className="hit px-3 text-sm whitespace-nowrap text-muted data-[state=active]:text-fg data-[state=active]:font-black data-[state=active]:shadow-[inset_0_-2px_0_var(--fg)]" data-testid={`tab-${k}`}>{l}</Tabs.Trigger>
           ))}
         </Tabs.List>
-        {onClose && <IconButton label="סגור חלונית" onClick={onClose}><X size={17} /></IconButton>}
+        {onClose && <span className="self-center"><IconButton label="סגור חלונית" onClick={onClose}><X size={17} /></IconButton></span>}
       </div>
       <Tabs.Content value="notes" className="flex-1 min-h-0"><NotesPanel bk={bk} {...notesProps} /></Tabs.Content>
       <Tabs.Content value="scene" className="flex-1 min-h-0 overflow-y-auto"><ScenePanel bk={bk} scene={scene} chapter={chapter} onShowVersions={onShowVersions} /></Tabs.Content>

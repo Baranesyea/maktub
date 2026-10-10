@@ -4,6 +4,8 @@ export default {
   content: ['./index.html', './src/**/*.{js,jsx}'],
   theme: {
     extend: {
+      // Short windows (a laptop with the bookmarks bar open): the rail tightens up.
+      screens: { short: { raw: '(min-width: 640px) and (max-height: 720px)' } },
       colors: {
         bg: 'var(--bg)', surface: 'var(--surface)', sunk: 'var(--sunk)', fg: 'var(--fg)',
         muted: 'var(--muted)', faint: 'var(--faint)', line: 'var(--line)', 'line-strong': 'var(--line-strong)', raised: 'var(--raised)',

@@ -51,6 +51,12 @@ function applyToDocument(s) {
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', getComputedStyle(root).getPropertyValue('--bg').trim() || '#f2f2f3')
 }
 
+// Apply the remembered look before anything renders, so the first loading screen
+// already has the writer's theme and font and the app does not flash a second look.
+if (typeof document !== 'undefined') {
+  try { applyToDocument({ ...DEFAULTS, ...JSON.parse(localStorage.getItem(LOCAL_KEY) || '{}') }) } catch { /* first visit */ }
+}
+
 export function SettingsProvider({ children }) {
   const [settings, setSettings] = useState(() => {
     try { return { ...DEFAULTS, ...JSON.parse(localStorage.getItem(LOCAL_KEY) || '{}') } } catch { return DEFAULTS }

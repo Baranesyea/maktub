@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Loading } from '@/components/AppShell'
 import { useNavigate, useParams, useSearchParams, Link } from 'react-router-dom'
 import { Menu as MenuIcon, PanelLeft, Maximize2, Minimize2, BookOpen, Search, MoreVertical, Home, LayoutGrid, FileText, Upload, Download, CalendarClock, Clock, Trash2, Settings, HelpCircle, Check, X, Layers, Undo2, Lightbulb, History } from 'lucide-react'
 import { useBook } from '@/hooks/useBook'
@@ -329,7 +330,7 @@ export default function Workspace() {
     }
   }, [kb.open])
 
-  if (bk.loading) return <div className="h-full flex items-center justify-center text-muted">טוען את הספר…</div>
+  if (bk.loading) return <Loading />
   if (bk.error || !bk.book) return (
     <div className="h-full flex flex-col items-center justify-center gap-3 text-center p-6">
       <p>לא הצלחנו לטעון את הספר.</p>
@@ -443,7 +444,7 @@ export default function Workspace() {
         <main className="relative flex-1 min-w-0 flex flex-col bg-surface" data-tour="editor">
           {/* Formatting sits above the text, like a word processor's toolbar. */}
           {view === 'write' && !focusMode && (
-            <div className="chrome h-11 shrink-0 border-b border-line flex items-center justify-center gap-2 px-2 bg-surface overflow-x-auto" onMouseDown={(e) => { if (e.target.closest('button')) e.preventDefault() }} data-testid="format-strip">
+            <div className="chrome h-14 shrink-0 border-b border-line flex items-center justify-center gap-2 px-2 bg-surface overflow-x-auto" onMouseDown={(e) => { if (e.target.closest('button')) e.preventDefault() }} data-testid="format-strip">
               <FormatBar editor={activeEditor} onAddNote={addNote} onSplit={splitHere} compact={layout === 'narrow'} bare />
               {layout !== 'narrow' && <span className="w-px h-5 bg-line" aria-hidden />}
               {layout !== 'narrow' && <TextSizeControl value={size} onChange={setSize} bare />}

@@ -4,7 +4,7 @@ import { Plus, Trash2, ChevronDown, ChevronLeft } from 'lucide-react'
 import { useBook, chapterLabel } from '@/hooks/useBook'
 import { resolveTime, midpoint, formatTime, jumps, timelineChecks } from '@/lib/timeline'
 import { StoryTimeEditor } from '@/components/SidePanel'
-import { Page, Panel } from '@/components/AppShell'
+import { Page, Panel, Loading } from '@/components/AppShell'
 import { Button, IconButton, inputClass } from '@/components/ui'
 import { cn } from '@/lib/utils'
 
@@ -35,7 +35,7 @@ export default function Timeline() {
     return reading.map((x, i) => ({ i, rank: rank.get(x.s.id), title: x.s.title || chapterLabel(x.c) })).filter((p) => p.rank != null)
   }, [reading, chrono])
 
-  if (bk.loading || !bk.book) return <div className="h-full flex items-center justify-center text-muted">טוען…</div>
+  if (bk.loading || !bk.book) return <Loading />
 
   const W = 640, H = 220
   const n = Math.max(1, reading.length - 1), m = Math.max(1, chrono.length - 1)

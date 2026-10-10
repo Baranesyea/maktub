@@ -5,7 +5,7 @@ import { useBook, chapterLabel } from '@/hooks/useBook'
 import { usePlanToday } from '@/hooks/usePlanToday'
 import { useSettings } from '@/lib/settings'
 import { WEEKDAYS, DEFAULT_WEEKLY, DEFAULT_WPH, chapterDueDates, dateKey, parseKey } from '@/lib/planning'
-import { Page, Panel } from '@/components/AppShell'
+import { Page, Panel, Loading } from '@/components/AppShell'
 import { Button, inputClass } from '@/components/ui'
 import { formatNumber } from '@/lib/text'
 import { cn } from '@/lib/utils'
@@ -24,7 +24,7 @@ export default function Plan() {
   const weekly = plan.weekly_minutes || DEFAULT_WEEKLY
   const due = useMemo(() => chapterDueDates(bk.flatChapters.filter((c) => !c.unused).map((c) => ({ id: c.id, words: c.words, due_date: plan.chapter_due?.[c.id] || null, estimate: plan.target_words ? plan.target_words / Math.max(1, bk.flatChapters.length) : undefined })), plan, { wph: r.wph }), [bk.flatChapters, plan, r.wph])
 
-  if (bk.loading || !bk.book) return <div className="h-full flex items-center justify-center text-muted">טוען…</div>
+  if (bk.loading || !bk.book) return <Loading />
 
   const weeklyMinutes = weekly.reduce((a, b) => a + b, 0)
   return (

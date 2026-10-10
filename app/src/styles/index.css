@@ -130,6 +130,8 @@ body {
 }
 
 ::placeholder { color: var(--faint); opacity: 1; }
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
 /* Headings and big numbers use the display font (the same as --ui-font unless the
    chosen font is a display-only one). The writing surface keeps its own font. */
 :where(h1, h2, h3, .font-black, .font-bold, .font-semibold, .text-lg, .text-xl, .text-2xl, .text-3xl, .text-4xl, .text-5xl):not(:where(.prose-write *, .reading article *)) {

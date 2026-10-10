@@ -160,9 +160,9 @@ export default function BookTree({ bk, activeChapterId, activeSceneId, onOpenCha
 
   return (
     <nav className="h-full flex flex-col bg-sunk" aria-label="עץ הספר" data-tour="tree" onKeyDown={onKeyDown}>
-      <div className="px-3 pt-3 pb-2 flex items-start justify-between gap-2 border-b border-line">
+      <div className="h-14 shrink-0 px-3 flex items-center justify-between gap-2 border-b border-line">
         <div className="min-w-0">
-          <div className="font-semibold truncate">{bk.book?.title}</div>
+          <div className="font-semibold truncate leading-tight">{bk.book?.title}</div>
           <div className="text-xs text-muted tabular-nums">{formatNumber(totalWords)} מילים · כ־{formatNumber(pagesFor(totalWords))} עמודים</div>
         </div>
         <div className="flex items-center">

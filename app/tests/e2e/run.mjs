@@ -763,6 +763,39 @@ await test('home: with a book the main action is to continue it; with none, to s
   assert((await page.textContent('header h1')).includes('ברוכים הבאים'), 'welcome title for a first book')
 })
 
+await test('workspace: tree header, format bar and side tabs end on one line', async (page) => {
+  await openBook(page)
+  const b = await page.evaluate(() => [
+    document.querySelector('[data-tour="tree"] > div'), document.querySelector('[data-testid="format-strip"]'), document.querySelector('[data-tour="side"] > div'),
+  ].map((e) => Math.round(e.getBoundingClientRect().bottom)))
+  assert(b[0] === b[1] && b[1] === b[2], 'bottoms differ: ' + b.join(', '))
+})
+
+await test('refresh: one loading look from sign-in check to the open book', async (page) => {
+  await openBook(page)
+  await page.evaluate(() => localStorage.setItem('maktub_mock_latency', '600'))
+  const seen = new Set()
+  const poll = setInterval(async () => { const t = await page.evaluate(() => document.body.innerText).catch(() => ''); if (t.includes('טוען')) seen.add('text') }, 50)
+  await page.reload()
+  await page.waitForSelector('[data-testid="loading"]', { timeout: 5000 })
+  await page.waitForSelector('.ProseMirror', { timeout: 20000 })
+  clearInterval(poll)
+  await page.evaluate(() => localStorage.removeItem('maktub_mock_latency'))
+  assert(!seen.has('text'), 'an old text loading screen appeared')
+})
+
+await test('short window: the page never scrolls past the screen and the account stays reachable', { viewport: { width: 1000, height: 490 } }, async (page) => {
+  await openBook(page)
+  for (const path of [page.url(), BASE + '/', BASE + '/settings']) {
+    await page.goto(path); await sleep(800)
+    const r = await page.evaluate(() => ({ doc: document.documentElement.scrollHeight, vh: innerHeight, acc: document.querySelector('[data-testid="account-menu"]').getBoundingClientRect().bottom }))
+    assert(r.doc <= r.vh, `page taller than the window on ${path}: ${r.doc} > ${r.vh}`)
+    assert(r.acc <= r.vh, `account button off screen on ${path}: ${r.acc}`)
+  }
+  await page.click('[data-testid="account-menu"]')
+  await waitFor(() => page.getByText('התנתקות').isVisible(), 'account menu opens')
+})
+
 await test('phone: dark bottom bar with the main places', { viewport: { width: 390, height: 844 }, touch: true, mobile: true }, async (page) => {
   await openBook(page)
   await page.goto(BASE + '/')
