@@ -2,6 +2,7 @@
 // "mine" = the user's Fontbit fonts (loaded from a local stylesheet that is not in the public repo).
 export const FONTS = [
   { id: 'gofan', name: 'גופן סאנס', css: "'Fb Gofan Sans', 'Assistant', sans-serif", kind: 'sans', mine: true, ui: true, write: true },
+  { id: 'optimum', name: 'אופטימום', css: "'Fb Optimum', 'Assistant', sans-serif", kind: 'sans', mine: true, ui: true, write: true },
   { id: 'hamahapecha', name: 'המהפכה', css: "'Fb Hamahapecha', 'Assistant', sans-serif", kind: 'sans', mine: true, ui: true, write: true },
   // Basis has only hairline (100) and black (900), so it is used for headings and big numbers;
   // regular interface text stays in Gofan Sans, which reads well at small sizes.

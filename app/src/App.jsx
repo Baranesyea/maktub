@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { BrowserRouter as Router, Route, Routes, Navigate, Outlet, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from '@/lib/AuthContext'
 import { SettingsProvider, useSettings } from '@/lib/settings'
@@ -7,6 +7,7 @@ import { useToasts } from '@/lib/toast'
 import { Toasts, Button } from '@/components/ui'
 import Tour from '@/components/Tour'
 import { AppFrame, BootScreen } from '@/components/AppShell'
+import Splash, { splashLikely, shouldSplash } from '@/components/Splash'
 import Home from '@/pages/Home'
 import Workspace from '@/pages/Workspace'
 import Reading from '@/pages/Reading'
@@ -42,6 +43,25 @@ function Protected() {
 }
 
 function Shell() {
+  const { isAuthenticated, isLoadingAuth, isLoadingPublicSettings } = useAuth()
+  // The entrance splash, once per session for a signed-in writer. When a sign-in is likely it
+  // starts right away and covers the sign-in check; it is dropped if that check says signed out.
+  const [splash, setSplash] = useState(() => splashLikely())
+  const resolved = !isLoadingAuth && !isLoadingPublicSettings
+  useEffect(() => {
+    if (!resolved) return
+    if (isAuthenticated && shouldSplash()) setSplash(true)
+    else if (!isAuthenticated) setSplash(false)
+  }, [resolved, isAuthenticated])
+  return (
+    <>
+      <ShellContent />
+      {splash && <Splash onDone={() => setSplash(false)} />}
+    </>
+  )
+}
+
+function ShellContent() {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, checkAppState } = useAuth()
   const toasts = useToasts()
   if (isLoadingPublicSettings || isLoadingAuth) {

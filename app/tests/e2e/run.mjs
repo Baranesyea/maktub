@@ -49,6 +49,8 @@ async function test(name, opts, fn) {
   if (typeof opts === 'function') { fn = opts; opts = {} }
   if (filter && !name.includes(filter)) return
   const ctx = await browser.newContext({ viewport: opts.viewport || { width: 1400, height: 900 }, locale: 'he-IL', hasTouch: !!opts.touch, isMobile: !!opts.mobile, acceptDownloads: true, colorScheme: opts.colorScheme || 'light' })
+  // The entrance splash has its own test; everywhere else start as if it was already seen.
+  if (!opts.splash) await ctx.addInitScript(() => { try { sessionStorage.setItem('maktub_splash_seen', '1') } catch {} })
   const page = await ctx.newPage()
   const errors = []
   page.on('pageerror', (e) => errors.push(e.message))
@@ -769,6 +771,15 @@ await test('workspace: tree header, format bar and side tabs end on one line', a
     document.querySelector('[data-tour="tree"] > div'), document.querySelector('[data-testid="format-strip"]'), document.querySelector('[data-tour="side"] > div'),
   ].map((e) => Math.round(e.getBoundingClientRect().bottom)))
   assert(b[0] === b[1] && b[1] === b[2], 'bottoms differ: ' + b.join(', '))
+})
+
+await test('entrance splash: the wordmark is typed once per session, then the app', { splash: true }, async (page) => {
+  await page.goto(BASE + '/')
+  await page.waitForSelector('[data-testid="splash"]', { timeout: 3000 })
+  await sleep(700); await page.screenshot({ path: `${OUT}/splash-typing.png` })
+  await waitFor(async () => (await page.locator('[data-testid="splash"]').count()) === 0, 'splash leaves', 5000)
+  await page.reload(); await sleep(1200)
+  assert((await page.locator('[data-testid="splash"]').count()) === 0, 'no splash again after a refresh in the same session')
 })
 
 await test('refresh: one loading look from sign-in check to the open book', async (page) => {

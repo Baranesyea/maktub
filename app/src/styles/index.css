@@ -215,3 +215,7 @@ button { -webkit-user-select: none; user-select: none; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
 }
+
+/* Splash caret: a plain on/off blink, like a text cursor. */
+.splash-caret { animation: splash-caret 0.9s steps(1) infinite; }
+@keyframes splash-caret { 50% { opacity: 0; } }
