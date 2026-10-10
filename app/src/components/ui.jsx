@@ -1,5 +1,5 @@
 // Small UI primitives shared across the app.
-import { forwardRef } from 'react'
+import { forwardRef, useLayoutEffect, useRef, useState } from 'react'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { X, ChevronDown, Check } from 'lucide-react'
@@ -28,12 +28,30 @@ export const IconButton = forwardRef(function IconButton({ label, className, act
   )
 })
 
-export function Menu({ trigger, children, align = 'end', open, onOpenChange }) {
+/**
+ * Opens a menu toward the side of the screen with more room (down from a button high on the
+ * screen, up from one low on it), so long menus fit instead of running past the edge.
+ */
+export function useMenuSide(isOpen) {
+  const ref = useRef(null)
+  const [side, setSide] = useState('bottom')
+  useLayoutEffect(() => {
+    if (!isOpen || !ref.current) return
+    const r = ref.current.getBoundingClientRect()
+    setSide(window.innerHeight - r.bottom >= r.top ? 'bottom' : 'top')
+  }, [isOpen])
+  return [ref, side]
+}
+
+export function Menu({ trigger, children, align = 'end', open, onOpenChange, side: fixedSide }) {
+  const [inner, setInner] = useState(false)
+  const isOpen = open ?? inner
+  const [ref, side] = useMenuSide(isOpen)
   return (
-    <DropdownMenu.Root open={open} onOpenChange={onOpenChange} dir="rtl">
-      <DropdownMenu.Trigger asChild>{trigger}</DropdownMenu.Trigger>
+    <DropdownMenu.Root open={isOpen} onOpenChange={(v) => { setInner(v); onOpenChange?.(v) }} dir="rtl">
+      <DropdownMenu.Trigger asChild ref={ref}>{trigger}</DropdownMenu.Trigger>
       <DropdownMenu.Portal>
-        <DropdownMenu.Content align={align} sideOffset={6} collisionPadding={8} className="z-50 min-w-[200px] max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto rounded-xl border border-line bg-surface p-1.5 shadow-[var(--shadow)] text-[15px]" dir="rtl">
+        <DropdownMenu.Content side={fixedSide || side} align={fixedSide ? 'center' : align} sideOffset={6} collisionPadding={8} className="z-50 min-w-[200px] max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto rounded-xl border border-line bg-surface p-1.5 shadow-[var(--shadow)] text-[15px]" dir="rtl">
           {children}
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
@@ -46,7 +64,7 @@ export function MenuItem({ children, onSelect, danger, disabled, icon: Icon }) {
     <DropdownMenu.Item
       disabled={disabled}
       onSelect={onSelect}
-      className={cn('flex items-center gap-2 rounded-lg px-2.5 min-h-[38px] cursor-pointer outline-none data-[highlighted]:bg-sunk data-[disabled]:opacity-40', danger && 'text-danger')}
+      className={cn('flex items-center gap-2 rounded-lg px-2.5 min-h-[34px] cursor-pointer outline-none data-[highlighted]:bg-sunk data-[disabled]:opacity-40', danger && 'text-danger')}
     >
       {Icon && <Icon size={16} className="shrink-0 opacity-70" />}
       <span className="flex-1">{children}</span>
@@ -65,9 +83,11 @@ export function Select({ value, onChange, options, placeholder = 'בחרו', siz
   const current = options.find((o) => String(o.value) === String(value ?? ''))
   const h = { md: 'h-10 px-3 text-[15px]', sm: 'h-9 px-2.5 text-sm', xs: 'h-7 px-2 text-[12px] text-muted' }[size]
   let lastGroup
+  const [isOpen, setOpen] = useState(false)
+  const [ref, side] = useMenuSide(isOpen)
   return (
-    <DropdownMenu.Root dir="rtl" modal={false}>
-      <DropdownMenu.Trigger asChild>
+    <DropdownMenu.Root dir="rtl" modal={false} open={isOpen} onOpenChange={setOpen}>
+      <DropdownMenu.Trigger asChild ref={ref}>
         <button
           type="button"
           aria-label={ariaLabel}
@@ -80,7 +100,7 @@ export function Select({ value, onChange, options, placeholder = 'בחרו', siz
         </button>
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
-        <DropdownMenu.Content align={align} sideOffset={4} collisionPadding={8} dir="rtl"
+        <DropdownMenu.Content side={side} align={align} sideOffset={4} collisionPadding={8} dir="rtl"
           className={cn('z-[60] min-w-[var(--radix-dropdown-menu-trigger-width)] max-h-[min(360px,var(--radix-dropdown-menu-content-available-height))] overflow-y-auto rounded-xl border border-line bg-surface p-1.5 shadow-[var(--shadow)] text-[15px]', menuClassName)}>
           {options.map((o) => {
             const head = o.group && o.group !== lastGroup ? o.group : null

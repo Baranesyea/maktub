@@ -1118,6 +1118,39 @@ await test('menus stay inside the screen, even long ones near an edge', { viewpo
   await page.screenshot({ path: `${OUT}/menu-edge.png` })
 })
 
+await test('13-inch laptop: every menu opens where it fits whole, top or bottom of the screen', { viewport: { width: 1440, height: 760 } }, async (page) => {
+  await openBook(page)
+  for (let k = 0; k < 9; k++) { await page.click('[data-testid="add-chapter"]'); await sleep(200) }
+  await sleep(500)
+  const check = async (label) => {
+    const menu = page.locator('[role="menu"]').last()
+    await menu.waitFor(); await sleep(250)
+    const r = await menu.evaluate((el) => { const b = el.getBoundingClientRect(); return { top: b.top, bottom: b.bottom, cut: el.scrollHeight > el.clientHeight + 1 } })
+    assert(r.top >= 0 && r.bottom <= 760, `${label}: inside the screen, got ${Math.round(r.top)}..${Math.round(r.bottom)}`)
+    assert(!r.cut, `${label}: every item visible without scrolling`)
+    await page.keyboard.press('Escape'); await sleep(200)
+  }
+  const rows = page.locator('[data-chapter-id]')
+  const last = rows.nth((await rows.count()) - 1)
+  await last.scrollIntoViewIfNeeded()
+  await last.hover(); await last.locator('button[aria-label="פעולות לפרק"]').click()
+  await check('chapter menu low on the screen')
+  const first = rows.first()
+  await first.scrollIntoViewIfNeeded()
+  await first.hover(); await first.locator('button[aria-label="פעולות לפרק"]').click()
+  await check('chapter menu high on the screen')
+  await page.click('[data-testid="more-menu"]')
+  await check('the "more" menu')
+  // A short window: the chapter menu is taller than the room above or below its row.
+  await page.setViewportSize({ width: 1440, height: 560 }); await sleep(400)
+  const mid = rows.nth(2)
+  await mid.scrollIntoViewIfNeeded(); await mid.hover(); await mid.locator('button[aria-label="פעולות לפרק"]').click()
+  const menu = page.locator('[role="menu"]').last()
+  await menu.waitFor(); await sleep(250)
+  const r = await menu.evaluate((el) => { const b = el.getBoundingClientRect(); return { top: b.top, bottom: b.bottom, cut: el.scrollHeight > el.clientHeight + 1 } })
+  assert(r.top >= 0 && r.bottom <= 560 && !r.cut, `short window: the whole menu shows, got ${Math.round(r.top)}..${Math.round(r.bottom)} cut=${r.cut}`)
+})
+
 await test('tree: a long chapter name glides on hover to show all of it', async (page) => {
   await page.goto(BASE + '/')
   await page.evaluate(() => { const rows = JSON.parse(localStorage.getItem('maktub_mock_Chapter')); rows[1].title = 'אחי, הים, והקיץ שבו הכול התחיל להשתנות בלי שאף אחד שם לב'; localStorage.setItem('maktub_mock_Chapter', JSON.stringify(rows)) })

@@ -1,7 +1,8 @@
 // Linking an idea, a picture or a research note to the book: a chapter or a scene, and characters.
 import { Check, UserRound, X } from 'lucide-react'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
-import { Select } from '@/components/ui'
+import { Select, useMenuSide } from '@/components/ui'
+import { useState } from 'react'
 import { chapterLabel } from '@/hooks/useBook'
 import { cn } from '@/lib/utils'
 
@@ -30,6 +31,8 @@ export function CharacterPicker({ bk, value = [], onChange, testid = 'character-
   const people = bk.characters || []
   const chosen = people.filter((c) => value.includes(c.id))
   const toggle = (id) => onChange(value.includes(id) ? value.filter((x) => x !== id) : [...value, id])
+  const [isOpen, setOpen] = useState(false)
+  const [ref, side] = useMenuSide(isOpen)
   return (
     <div className="flex flex-wrap items-center gap-1.5">
       {chosen.map((c) => (
@@ -39,12 +42,12 @@ export function CharacterPicker({ bk, value = [], onChange, testid = 'character-
         </span>
       ))}
       {people.length > 0 ? (
-        <DropdownMenu.Root dir="rtl" modal={false}>
-          <DropdownMenu.Trigger asChild>
+        <DropdownMenu.Root dir="rtl" modal={false} open={isOpen} onOpenChange={setOpen}>
+          <DropdownMenu.Trigger asChild ref={ref}>
             <button className="h-7 px-2.5 rounded-full border border-dashed border-line-strong text-sm text-muted hover:text-fg inline-flex items-center gap-1" data-testid={testid}><UserRound size={13} />דמויות ומקומות</button>
           </DropdownMenu.Trigger>
           <DropdownMenu.Portal>
-            <DropdownMenu.Content align="start" sideOffset={4} collisionPadding={8} dir="rtl" className="z-[60] min-w-[200px] max-h-[min(320px,var(--radix-dropdown-menu-content-available-height))] overflow-y-auto rounded-xl border border-line bg-surface p-1.5 shadow-[var(--shadow)] text-[15px]">
+            <DropdownMenu.Content side={side} align="start" sideOffset={4} collisionPadding={8} dir="rtl" className="z-[60] min-w-[200px] max-h-[min(320px,var(--radix-dropdown-menu-content-available-height))] overflow-y-auto rounded-xl border border-line bg-surface p-1.5 shadow-[var(--shadow)] text-[15px]">
               {people.map((c) => (
                 <DropdownMenu.Item key={c.id} onSelect={(e) => { e.preventDefault(); toggle(c.id) }} data-testid={`${testid}-option-${c.id}`}
                   className="flex items-center gap-2 rounded-lg px-2.5 min-h-[36px] cursor-pointer outline-none data-[highlighted]:bg-sunk">

@@ -309,7 +309,7 @@ export default function BookTree({ bk, activeChapterId, activeSceneId, onOpenCha
 
 function RowMenuBase({ children, label, open, onOpenChange }) {
   return (
-    <Menu open={open} onOpenChange={onOpenChange} trigger={<IconButton label={label} className="row-menu opacity-60 group-hover:opacity-100 shrink-0" onClick={(e) => e.stopPropagation()}><MoreHorizontal size={16} /></IconButton>}>{children}</Menu>
+    <Menu side="left" open={open} onOpenChange={onOpenChange} trigger={<IconButton label={label} className="row-menu opacity-60 group-hover:opacity-100 shrink-0" onClick={(e) => e.stopPropagation()}><MoreHorizontal size={16} /></IconButton>}>{children}</Menu>
   )
 }
 

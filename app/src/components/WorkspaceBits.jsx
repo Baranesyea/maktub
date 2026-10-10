@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import * as Popover from '@radix-ui/react-popover'
 import { Bold, Italic, Highlighter, Heading2, Quote, Minus as Rule, Pin, Scissors, Timer, Cloud, CloudOff, Check, Loader2, AlertTriangle, Undo2, Redo2, Trash2 as Trash } from 'lucide-react'
 import { subscribeSave } from '@/lib/outbox'
@@ -150,13 +150,16 @@ export function TextMenu({ menu, onClose, onAddNote, onHighlight, onOpenNote, on
     }
   }, [menu, onClose])
   useEffect(() => { ref.current?.querySelector('button')?.focus() }, [menu])
+  // Place it at the click, then pull it up by its real height if it would run past the bottom.
+  const [h, setH] = useState(0)
+  useLayoutEffect(() => { if (menu && ref.current) setH(ref.current.offsetHeight) }, [menu])
   if (!menu) return null
   const W = 230
   const left = Math.min(Math.max(8, menu.x - W), window.innerWidth - W - 8)
-  const top = Math.min(menu.y, window.innerHeight - 320)
+  const top = Math.max(8, Math.min(menu.y, window.innerHeight - (h || 320) - 8))
   const item = 'w-full flex items-center gap-2.5 rounded-md px-2.5 min-h-[36px] text-start hover:bg-sunk focus:bg-sunk outline-none focus-visible:outline-none'
   return (
-    <div ref={ref} role="menu" dir="rtl" className="fixed z-[70] rounded-xl border border-line bg-surface p-1.5 shadow-[var(--shadow)] text-[14px]" style={{ left, top, width: W }} data-testid="text-menu"
+    <div ref={ref} role="menu" dir="rtl" className="fixed z-[70] rounded-xl border border-line bg-surface p-1.5 shadow-[var(--shadow)] text-[14px] overflow-y-auto" style={{ left, top, width: W, maxHeight: 'calc(100vh - 16px)' }} data-testid="text-menu"
       onKeyDown={(e) => {
         if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return
         e.preventDefault()
