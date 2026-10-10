@@ -786,6 +786,22 @@ await test('home: with a book the main action is to continue it; with none, to s
   assert((await page.textContent('header h1')).includes('ברוכים הבאים'), 'welcome title for a first book')
 })
 
+await test('tree: a new chapter scrolls into view; the row menu is a small square', { viewport: { width: 1300, height: 520 } }, async (page) => {
+  await openBook(page)
+  for (let k = 0; k < 9; k++) { await page.click('[data-testid="add-chapter"]'); await sleep(250) }
+  await sleep(700)
+  const seen = await page.evaluate(() => {
+    const tree = document.querySelector('[data-tour="tree"]')
+    const rows = [...tree.querySelectorAll('[data-chapter-id]')]
+    const last = rows[rows.length - 1].getBoundingClientRect()
+    const box = tree.getBoundingClientRect()
+    return last.top >= box.top && last.bottom <= box.bottom + 1
+  })
+  assert(seen, 'the newest chapter is visible in the tree')
+  const btn = await page.locator('[data-testid="chapter-row-0"] button[aria-label="פעולות לפרק"]').boundingBox()
+  assert(btn.height <= 30 && btn.width <= 30, 'menu button is small, got ' + Math.round(btn.width) + 'x' + Math.round(btn.height))
+})
+
 await test('workspace: tree header, format bar and side tabs end on one line', async (page) => {
   await openBook(page)
   const b = await page.evaluate(() => [

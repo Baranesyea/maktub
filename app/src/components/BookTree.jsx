@@ -35,6 +35,13 @@ const NotesBadge = ({ n }) => n > 0 ? (
 ) : null
 
 export default function BookTree({ bk, activeChapterId, activeSceneId, onOpenChapter, onOpenScene, noteCounts = {}, onExport, onClose }) {
+  // Keep the open chapter in view: after adding a chapter at the end, or opening one from elsewhere.
+  const treeRef = useRef(null)
+  useEffect(() => {
+    if (!activeChapterId) return
+    const id = requestAnimationFrame(() => treeRef.current?.querySelector(`[data-chapter-id="${activeChapterId}"]`)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }))
+    return () => cancelAnimationFrame(id)
+  }, [activeChapterId, bk.chapters.length])
   const [collapsed, setCollapsed] = useState(() => { try { return JSON.parse(localStorage.getItem('maktub_tree_collapsed') || '{}') } catch { return {} } })
   const [renaming, setRenaming] = useState(null) // {kind, id}
   const [selected, setSelected] = useState([]) // [{kind, id}]
@@ -159,7 +166,7 @@ export default function BookTree({ bk, activeChapterId, activeSceneId, onOpenCha
   const menuProps = (id) => ({ open: ctxMenu === id, onOpenChange: (o) => setCtxMenu(o ? id : null) })
 
   return (
-    <nav className="h-full flex flex-col bg-sunk" aria-label="עץ הספר" data-tour="tree" onKeyDown={onKeyDown}>
+    <nav ref={treeRef} className="h-full flex flex-col bg-sunk" aria-label="עץ הספר" data-tour="tree" onKeyDown={onKeyDown}>
       <div className="h-14 shrink-0 px-3 flex items-center justify-between gap-2 border-b border-line">
         <div className="min-w-0">
           <div className="font-semibold truncate leading-tight">{bk.book?.title}</div>
@@ -204,6 +211,7 @@ export default function BookTree({ bk, activeChapterId, activeSceneId, onOpenCha
                                 aria-selected={active}
                                 aria-expanded={showScenes ? open : undefined}
                                 data-testid={`chapter-row-${i}`}
+                                data-chapter-id={ch.id}
                                 className={cn('group hit flex items-center gap-1.5 rounded-lg px-1.5 cursor-pointer select-none', active && !activeSceneId ? 'bg-accent-soft text-accent' : active ? 'bg-surface' : 'hover:bg-surface', isSel('chapter', ch.id) && selected.length > 1 && 'ring-2 ring-accent', ch.unused && 'opacity-50')}
                                 onClick={(e) => { if (!clickSelect(e, 'chapter', ch.id)) onOpenChapter(ch.id) }}
                                 onDoubleClick={() => setRenaming({ kind: 'chapter', id: ch.id })}
@@ -282,7 +290,7 @@ export default function BookTree({ bk, activeChapterId, activeSceneId, onOpenCha
 
 function RowMenuBase({ children, label, open, onOpenChange }) {
   return (
-    <Menu open={open} onOpenChange={onOpenChange} trigger={<IconButton label={label} className="opacity-60 group-hover:opacity-100 shrink-0" onClick={(e) => e.stopPropagation()}><MoreHorizontal size={16} /></IconButton>}>{children}</Menu>
+    <Menu open={open} onOpenChange={onOpenChange} trigger={<IconButton label={label} className="row-menu opacity-60 group-hover:opacity-100 shrink-0" onClick={(e) => e.stopPropagation()}><MoreHorizontal size={16} /></IconButton>}>{children}</Menu>
   )
 }
 

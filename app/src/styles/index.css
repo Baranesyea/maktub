@@ -144,6 +144,8 @@ button { -webkit-user-select: none; user-select: none; }
 /* Touch-friendly minimum hit area for interactive rows and buttons. */
 .hit { min-height: 40px; min-width: 40px; }
 @media (pointer: coarse) { .hit { min-height: 44px; min-width: 44px; } }
+/* The "…" in tree rows: a small square on hover with a mouse, a full target for fingers. */
+@media (pointer: fine) { .row-menu { min-height: 28px; min-width: 28px; height: 28px; width: 28px; border-radius: 7px; } }
 
 /* ---------- Writing surface ---------- */
 .prose-write {
