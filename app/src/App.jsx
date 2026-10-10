@@ -18,6 +18,7 @@ import SettingsPage from '@/pages/Settings'
 import BackupPage from '@/pages/Backup'
 import InspirationPage from '@/pages/Inspiration'
 import ResearchPage from '@/pages/Research'
+import TextsPage from '@/pages/Texts'
 import { Login, Register, ForgotPassword, ResetPassword } from '@/pages/Auth'
 
 function DriveBinder() {
@@ -94,6 +95,8 @@ function ShellContent() {
           <Route path="/book/:bookId/research/:noteId" element={<ResearchPage />} />
           <Route path="/book/:bookId/import" element={<ImportPage />} />
           <Route path="/import" element={<ImportPage />} />
+          <Route path="/texts" element={<TextsPage />} />
+          <Route path="/texts/:textId" element={<TextsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/backup" element={<BackupPage />} />
           <Route path="*" element={<Home />} />

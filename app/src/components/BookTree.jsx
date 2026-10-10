@@ -5,6 +5,9 @@ import { Menu, MenuItem, MenuSeparator, IconButton, Dialog, Button } from '@/com
 import { chapterLabel } from '@/hooks/useBook'
 import { cn } from '@/lib/utils'
 import { formatNumber, pagesFor, SCENE_STATUS } from '@/lib/text'
+import { addText } from '@/hooks/useTexts'
+import { db } from '@/api/db'
+import Marquee from '@/components/Marquee'
 import { toast } from '@/lib/toast'
 
 function InlineRename({ value, onDone }) {
@@ -130,6 +133,20 @@ export default function BookTree({ bk, activeChapterId, activeSceneId, onOpenCha
     }
   }
 
+  // Something written for the book that turned out not to belong: keep it as a text of its own.
+  const moveToTexts = async (kind, item, ch) => {
+    const scenes = kind === 'chapter' ? item.scenes : [item]
+    const content = scenes.map((s) => s.content || '').filter(Boolean).join('<hr>')
+    const words = scenes.reduce((n, s) => n + (s.word_count || 0), 0)
+    const title = kind === 'chapter' ? (item.title || chapterLabel(item)) : (item.title || chapterLabel(ch))
+    const text = await addText({ title, content, word_count: words, from_book: bk.book?.title || '' })
+    bk.trash(kind === 'chapter' ? 'chapters' : 'scenes', item.id)
+    toast(kind === 'chapter' ? 'הפרק עבר לטקסטים' : 'הסצנה עברה לטקסטים', {
+      action: { label: 'בטל', run: () => { bk.restore(kind === 'chapter' ? 'chapters' : 'scenes', item.id); db.LooseText.update(text.id, { deleted: true }).catch(() => {}) } },
+      ms: 6000,
+    })
+  }
+
   const chapterMenu = (ch) => (
     <>
       <MenuItem onSelect={() => bk.addChapter({ afterId: ch.id, partId: ch.part_id || null }).then(({ chapter }) => onOpenChapter(chapter.id))}>הוסף פרק אחרי</MenuItem>
@@ -143,6 +160,7 @@ export default function BookTree({ bk, activeChapterId, activeSceneId, onOpenCha
       <MenuItem onSelect={() => bk.update('chapters', ch.id, { kind: ch.kind === 'epilogue' ? 'chapter' : 'epilogue' })}>{ch.kind === 'epilogue' ? 'הפוך לפרק רגיל' : 'סמן כאפילוג'}</MenuItem>
       <MenuItem onSelect={() => bk.update('chapters', ch.id, { unused: !ch.unused })}>{ch.unused ? 'החזר לשימוש' : 'סמן "לא בשימוש"'}</MenuItem>
       <MenuItem onSelect={() => onExport?.([ch.id])}>ייצא את הפרק</MenuItem>
+      <MenuItem onSelect={() => moveToTexts('chapter', ch)}>העבר לטקסטים (מחוץ לספר)</MenuItem>
       <MenuSeparator />
       <MenuItem danger onSelect={() => { bk.trash('chapters', ch.id); toast('הפרק הועבר לסל', { action: { label: 'בטל', run: () => bk.restore('chapters', ch.id) } }) }}>מחק</MenuItem>
     </>
@@ -158,6 +176,7 @@ export default function BookTree({ bk, activeChapterId, activeSceneId, onOpenCha
       <MenuItem onSelect={() => { const r = bk.mergeSceneWithPrevious(s.id); if (r === false) toast('זו הסצנה הראשונה בפרק'); else onOpenScene(r) }}>מזג עם הסצנה הקודמת</MenuItem>
       <MenuSeparator />
       <MenuItem onSelect={() => bk.update('scenes', s.id, { unused: !s.unused })}>{s.unused ? 'החזר לשימוש' : 'סמן "לא בשימוש"'}</MenuItem>
+      <MenuItem onSelect={() => moveToTexts('scene', s, ch)}>העבר לטקסטים (מחוץ לספר)</MenuItem>
       <MenuSeparator />
       <MenuItem danger onSelect={() => { bk.trash('scenes', s.id); toast('הסצנה הועברה לסל', { action: { label: 'בטל', run: () => bk.restore('scenes', s.id) } }) }}>מחק</MenuItem>
     </>
@@ -224,7 +243,7 @@ export default function BookTree({ bk, activeChapterId, activeSceneId, onOpenCha
                                 ) : <span className="w-6 shrink-0 flex justify-center"><StatusDot status={ch.scenes[0]?.status} /></span>}
                                 {renaming?.id === ch.id
                                   ? <InlineRename value={ch.title} onDone={(v) => { if (v !== null) bk.update('chapters', ch.id, { title: v }); setRenaming(null) }} />
-                                  : <span className="flex-1 min-w-0 truncate text-[15px]">{chapterLabel(ch)}</span>}
+                                  : <Marquee className="text-[15px]">{chapterLabel(ch)}</Marquee>}
                                 {ch.unused && <EyeOff size={13} className="text-muted" aria-label="לא בשימוש" />}
                                 <NotesBadge n={chapterNotes(ch)} />
                                 <span className="text-[12px] text-muted tabular-nums shrink-0">{formatNumber(ch.words)}</span>
@@ -251,7 +270,7 @@ export default function BookTree({ bk, activeChapterId, activeSceneId, onOpenCha
                                             <StatusDot status={s.status} />
                                             {renaming?.id === s.id
                                               ? <InlineRename value={s.title} onDone={(v) => { if (v !== null) bk.update('scenes', s.id, { title: v }); setRenaming(null) }} />
-                                              : <span className="flex-1 min-w-0 truncate">{s.title || `סצנה ${j + 1}`}</span>}
+                                              : <Marquee>{s.title || `סצנה ${j + 1}`}</Marquee>}
                                             <NotesBadge n={noteCounts[s.id] || 0} />
                                             <span className="text-[12px] text-muted tabular-nums shrink-0">{formatNumber(s.word_count || 0)}</span>
                                             <RowMenuBase label="פעולות לסצנה" {...menuProps(s.id)}>{sceneMenu(s, ch)}</RowMenuBase>

@@ -65,6 +65,15 @@ async function bookText(entities: any, email: string) {
     }
     out.push(`════════ ${book.title || 'ספר'} ════════\n${total.toLocaleString('he-IL')} מילים${lines.join('\n')}`)
   }
+  // Texts written outside any book.
+  const texts = (await entities.LooseText.filter(q).catch(() => [])).filter((t: any) => !t.deleted)
+  if (texts.length) {
+    const parts = texts.map((t: any) => {
+      const body = htmlToText((t.content || '') + (Array.isArray(t.content_more) ? t.content_more.join('') : ''))
+      return `■ ${t.title || 'בלי כותרת'}${t.description ? `\n${t.description}` : ''}\n\n${body || '(ריק)'}`
+    })
+    out.push(`════════ טקסטים ════════\n\n${parts.join('\n\n* * *\n\n')}`)
+  }
   return out.join('\n\n\n')
 }
 

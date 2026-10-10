@@ -5,7 +5,7 @@ import { isMock, uid } from '@/lib/utils'
 
 export const ENTITIES = [
   'Book', 'Part', 'Chapter', 'Scene', 'Note', 'Idea', 'Character', 'Era',
-  'WritingDay', 'Snapshot', 'UserSettings', 'Inspiration', 'ResearchNote',
+  'WritingDay', 'Snapshot', 'UserSettings', 'Inspiration', 'ResearchNote', 'LooseText',
 ]
 
 function matches(rec, query = {}) {
@@ -35,7 +35,7 @@ function sortBy(list, sort) {
 // `content` and the rest in `content_more`, and joined back on every read.
 export const FIELD_LIMIT = 19000
 const PIECE = 15000
-const LONG_FIELDS = { Scene: 'content', Snapshot: 'content', Inspiration: 'content', ResearchNote: 'content' }
+const LONG_FIELDS = { Scene: 'content', Snapshot: 'content', Inspiration: 'content', ResearchNote: 'content', LooseText: 'content' }
 
 export function splitLong(text, size = PIECE) {
   const out = []

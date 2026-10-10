@@ -1,0 +1,20 @@
+{
+  "name": "LooseText",
+  "type": "object",
+  "properties": {
+    "title": { "type": "string" },
+    "description": { "type": "string", "description": "One line about the text" },
+    "content": { "type": "string", "description": "Rich text" },
+    "content_more": { "type": "array", "items": { "type": "string" }, "description": "The rest of a long text: the server limits each text field to about 20,000 characters" },
+    "word_count": { "type": "number" },
+    "from_book": { "type": "string", "description": "Title of the book a chapter or scene was moved out of, if any" },
+    "deleted": { "type": "boolean", "default": false }
+  },
+  "required": [],
+  "rls": {
+    "create": true,
+    "read": { "created_by": "{{user.email}}" },
+    "update": { "created_by": "{{user.email}}" },
+    "delete": { "created_by": "{{user.email}}" }
+  }
+}

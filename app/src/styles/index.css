@@ -234,3 +234,14 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--accent); }
 .prose-note .ProseMirror a { text-decoration: underline; color: var(--link); }
 .prose-note-compact { font-size: 15px; }
 .prose-note-compact .ProseMirror { min-height: 5em; }
+
+/* Long names in the tree: ellipsis at rest, a slow back-and-forth glide on hover (right to left text,
+   so the hidden end is on the left and the text moves right to reveal it). */
+.marquee { text-overflow: ellipsis; }
+.marquee .marquee-inner { max-width: 100%; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; }
+.marquee.marquee-run { text-overflow: clip; }
+.marquee.marquee-run .marquee-inner { max-width: none; overflow: visible; animation: marquee-glide var(--marquee-time, 3s) ease-in-out infinite alternate; }
+@keyframes marquee-glide { 0%, 10% { transform: translateX(0); } 90%, 100% { transform: translateX(var(--marquee-shift, 0px)); } }
+
+/* The chapter name above the text: a soft hint when it is empty. */
+.chapter-title-edit:empty::before { content: attr(data-placeholder); color: var(--faint); }

@@ -1,10 +1,49 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react'
 import { Pin, Plus } from 'lucide-react'
 import SceneEditor from '@/components/editor/SceneEditor'
-import { chapterLabel } from '@/hooks/useBook'
 import { NOTE_TYPES, SCENE_STATUS } from '@/lib/text'
 import { cn } from '@/lib/utils'
 import { useSettings } from '@/lib/settings'
+
+/**
+ * The chapter's name above its text, editable in place: "פרק 3:" stays, the name after it is typed.
+ * Enter or clicking away keeps it; Escape puts the old name back.
+ */
+function ChapterTitle({ bk, chapter, editable }) {
+  const ref = useRef(null)
+  const [focused, setFocused] = useState(false)
+  const [hasText, setHasText] = useState(!!chapter.title)
+  useEffect(() => { if (ref.current && document.activeElement !== ref.current) { ref.current.textContent = chapter.title || ''; setHasText(!!chapter.title) } }, [chapter.id, chapter.title])
+  const numbered = !!chapter.number
+  const fallback = chapter.kind === 'prologue' ? 'פרולוג' : chapter.kind === 'epilogue' ? 'אפילוג' : 'שם לפרק'
+  const save = () => {
+    const v = (ref.current?.textContent || '').replace(/\s+/g, ' ').trim()
+    if (v !== (chapter.title || '')) bk.update('chapters', chapter.id, { title: v })
+  }
+  return (
+    <h1 className="text-center font-write font-black mb-8 text-fg" style={{ fontSize: 'calc(var(--write-size) * 1.45)' }} data-testid="chapter-title">
+      {numbered && <span>פרק {chapter.number}{(hasText || focused) ? ': ' : ''}</span>}
+      <span
+        ref={ref}
+        contentEditable={editable ? 'plaintext-only' : false}
+        suppressContentEditableWarning
+        role="textbox"
+        aria-label="שם הפרק"
+        title={editable ? 'לחצו כדי לשנות את שם הפרק' : undefined}
+        data-placeholder={numbered && !focused ? '' : fallback}
+        className={cn('chapter-title-edit outline-none rounded-md px-1 -mx-1 cursor-text', editable && 'hover:bg-sunk focus:bg-sunk')}
+        onFocus={() => setFocused(true)}
+        onBlur={() => { setFocused(false); save() }}
+        onInput={(e) => setHasText(!!e.currentTarget.textContent.trim())}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur() }
+          if (e.key === 'Escape') { e.currentTarget.textContent = chapter.title || ''; setHasText(!!chapter.title); e.currentTarget.blur() }
+        }}
+        data-testid="chapter-title-input"
+      />
+    </h1>
+  )
+}
 
 /**
  * A chapter shown as one continuous page made of its scenes.
@@ -72,7 +111,7 @@ const ChapterView = forwardRef(function ChapterView({ bk, chapter, activeSceneId
     <div className="relative flex-1 min-h-0">
       <div ref={scrollRef} className="absolute inset-0 overflow-y-auto" data-testid="editor-scroll" onScroll={() => {}}>
         <div className="mx-auto px-5 sm:px-10 pt-10 pb-[40vh]" style={{ maxWidth: `calc(${maxWidth} + 96px)` }}>
-          <h1 className="text-center font-write font-black text-[1.5em] mb-8 text-fg" style={{ fontSize: 'calc(var(--write-size) * 1.45)' }} data-testid="chapter-title">{chapterLabel(chapter)}</h1>
+          <ChapterTitle bk={bk} chapter={chapter} editable={editable} />
           <div ref={contentRef} className="relative">
             {chapter.scenes.map((s, i) => (
               <section key={s.id} data-scene-block={s.id} className={cn('relative', s.unused && 'opacity-60')}>

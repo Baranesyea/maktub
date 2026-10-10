@@ -1,7 +1,7 @@
 // The application frame: a fixed navigation rail on every screen, and the page anatomy
 // (header, panels, stat tiles) that every page is built from.
 import { NavLink, useMatch } from 'react-router-dom'
-import { Home as HomeIcon, Lightbulb, PenLine, CalendarClock, History, BookOpen, Upload, Settings, LogOut, ShieldCheck, Images, BookMarked } from 'lucide-react'
+import { Home as HomeIcon, Lightbulb, PenLine, CalendarClock, History, BookOpen, Upload, Settings, LogOut, ShieldCheck, Images, BookMarked, NotebookPen } from 'lucide-react'
 import { LogoMark } from '@/components/Logo'
 import { Menu, MenuItem, MenuLabel, MenuSeparator } from '@/components/ui'
 import { useSettings } from '@/lib/settings'
@@ -76,6 +76,7 @@ export function Rail() {
       <NavLink to="/" className="shrink-0 mb-3 mt-1 short:mb-1.5 short:mt-0 text-white" aria-label="מכתוב, מסך הבית"><LogoMark size={34} /></NavLink>
       <div className="flex-1 min-h-0 w-full flex flex-col items-center gap-1 short:gap-0.5 overflow-y-auto no-scrollbar">
       <RailLink to="/" end icon={HomeIcon} label="בית" testid="nav-home" />
+      <RailLink to="/texts" icon={NotebookPen} label="טקסטים" testid="nav-texts" />
       {bookId && (
         <>
           <div className="shrink-0 w-10 h-px bg-white/10 my-1.5 short:my-1" />
