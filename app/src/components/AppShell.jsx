@@ -1,7 +1,7 @@
 // The application frame: a fixed navigation rail on every screen, and the page anatomy
 // (header, panels, stat tiles) that every page is built from.
 import { NavLink, useMatch } from 'react-router-dom'
-import { Home as HomeIcon, Lightbulb, PenLine, CalendarClock, History, BookOpen, Upload, Settings, LogOut, ShieldCheck } from 'lucide-react'
+import { Home as HomeIcon, Lightbulb, PenLine, CalendarClock, History, BookOpen, Upload, Settings, LogOut, ShieldCheck, Images, BookMarked } from 'lucide-react'
 import { LogoMark } from '@/components/Logo'
 import { Menu, MenuItem, MenuLabel, MenuSeparator } from '@/components/ui'
 import { useSettings } from '@/lib/settings'
@@ -84,6 +84,8 @@ export function Rail() {
           <RailLink to={`/book/${bookId}/timeline`} icon={History} label="ציר זמן" testid="nav-timeline" />
           <RailLink to={`/book/${bookId}/read`} icon={BookOpen} label="קריאה" testid="nav-read" />
           <RailLink to={`/book/${bookId}?ideas=1`} icon={Lightbulb} label="רעיונות" testid="nav-ideas" match={false} />
+          <RailLink to={`/book/${bookId}/inspiration`} icon={Images} label="השראה" testid="nav-inspiration" />
+          <RailLink to={`/book/${bookId}/research`} icon={BookMarked} label="מחקר" testid="nav-research" />
         </>
       )}
       <div className="shrink-0 w-10 h-px bg-white/10 my-1.5 short:my-1" />

@@ -1,0 +1,23 @@
+{
+  "name": "ResearchNote",
+  "type": "object",
+  "properties": {
+    "book_id": { "type": "string" },
+    "title": { "type": "string" },
+    "content": { "type": "string", "description": "Rich text" },
+    "content_more": { "type": "array", "items": { "type": "string" }, "description": "The rest of a long text: the server limits each text field to about 20,000 characters" },
+    "tags": { "type": "array", "items": { "type": "string" } },
+    "link_chapter_id": { "type": "string" },
+    "link_scene_id": { "type": "string" },
+    "character_ids": { "type": "array", "items": { "type": "string" } },
+    "order": { "type": "number" },
+    "deleted": { "type": "boolean", "default": false }
+  },
+  "required": ["book_id"],
+  "rls": {
+    "create": true,
+    "read": { "created_by": "{{user.email}}" },
+    "update": { "created_by": "{{user.email}}" },
+    "delete": { "created_by": "{{user.email}}" }
+  }
+}

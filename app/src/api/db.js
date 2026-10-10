@@ -5,7 +5,7 @@ import { isMock, uid } from '@/lib/utils'
 
 export const ENTITIES = [
   'Book', 'Part', 'Chapter', 'Scene', 'Note', 'Idea', 'Character', 'Era',
-  'WritingDay', 'Snapshot', 'UserSettings',
+  'WritingDay', 'Snapshot', 'UserSettings', 'Inspiration', 'ResearchNote',
 ]
 
 function matches(rec, query = {}) {
@@ -35,7 +35,7 @@ function sortBy(list, sort) {
 // `content` and the rest in `content_more`, and joined back on every read.
 export const FIELD_LIMIT = 19000
 const PIECE = 15000
-const LONG_FIELDS = { Scene: 'content', Snapshot: 'content' }
+const LONG_FIELDS = { Scene: 'content', Snapshot: 'content', Inspiration: 'content', ResearchNote: 'content' }
 
 export function splitLong(text, size = PIECE) {
   const out = []
@@ -153,7 +153,7 @@ async function realEntities() {
 }
 
 // Base44 validates field types, so an empty value is sent as the type's empty value instead of null.
-const OBJECT_FIELDS = new Set(['plan', 'story_time', 'note_to_self', 'last_position', 'drive'])
+const OBJECT_FIELDS = new Set(['plan', 'story_time', 'note_to_self', 'last_position', 'drive', 'board'])
 const NUMBER_FIELDS = new Set(['words_per_hour', 'word_count', 'order', 'words', 'seconds', 'write_size', 'read_size', 'ipad_size'])
 export function sanitize(data) {
   if (!data || typeof data !== 'object') return data

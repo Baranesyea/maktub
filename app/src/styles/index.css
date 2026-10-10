@@ -223,3 +223,12 @@ button { -webkit-user-select: none; user-select: none; }
 
 /* Checkboxes and radios in the theme colour, not the browser blue. */
 input[type="checkbox"], input[type="radio"] { accent-color: var(--accent); }
+
+/* Notes about pictures and research: the writing font, a little smaller, no first-line indent. */
+.prose-note { font-size: calc(var(--write-size, 19px) - 2px); line-height: 1.75; }
+.prose-note .ProseMirror { min-height: 8em; }
+.prose-note .ProseMirror p { margin: 0 0 0.6em; text-indent: 0; }
+.prose-note .ProseMirror ul { padding-inline-start: 1.2em; list-style: disc; margin: 0 0 0.6em; }
+.prose-note .ProseMirror a { text-decoration: underline; color: var(--link); }
+.prose-note-compact { font-size: 15px; }
+.prose-note-compact .ProseMirror { min-height: 5em; }

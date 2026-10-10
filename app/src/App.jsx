@@ -16,6 +16,8 @@ import Timeline from '@/pages/Timeline'
 import ImportPage from '@/pages/Import'
 import SettingsPage from '@/pages/Settings'
 import BackupPage from '@/pages/Backup'
+import InspirationPage from '@/pages/Inspiration'
+import ResearchPage from '@/pages/Research'
 import { Login, Register, ForgotPassword, ResetPassword } from '@/pages/Auth'
 
 function DriveBinder() {
@@ -86,6 +88,10 @@ function ShellContent() {
           <Route path="/book/:bookId/read" element={<Reading />} />
           <Route path="/book/:bookId/plan" element={<Plan />} />
           <Route path="/book/:bookId/timeline" element={<Timeline />} />
+          <Route path="/book/:bookId/inspiration" element={<InspirationPage />} />
+          <Route path="/book/:bookId/inspiration/:itemId" element={<InspirationPage />} />
+          <Route path="/book/:bookId/research" element={<ResearchPage />} />
+          <Route path="/book/:bookId/research/:noteId" element={<ResearchPage />} />
           <Route path="/book/:bookId/import" element={<ImportPage />} />
           <Route path="/import" element={<ImportPage />} />
           <Route path="/settings" element={<SettingsPage />} />

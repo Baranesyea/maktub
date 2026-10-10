@@ -2,22 +2,14 @@
 // or a scene if you want, and can become a scene of its own.
 import { useState } from 'react'
 import { Plus, Trash2, ArrowUpLeft, Link2, X } from 'lucide-react'
-import { Dialog, Button, IconButton, inputClass, Select } from '@/components/ui'
+import { Dialog, Button, IconButton, inputClass } from '@/components/ui'
 import { chapterLabel } from '@/hooks/useBook'
+import { LinkPicker as SharedLinkPicker, toLink } from '@/components/Links'
+
+const LinkPicker = (p) => <SharedLinkPicker testid="idea-link-select" {...p} />
 import { cn } from '@/lib/utils'
 import { toast } from '@/lib/toast'
 
-function LinkPicker({ bk, value, onChange }) {
-  return (
-    <Select size="sm" value={value} onChange={onChange} aria-label="קישור לפרק או לסצנה" data-testid="idea-link-select" className="w-full"
-      options={[{ value: '', label: 'בלי קישור' }, ...bk.flatChapters.flatMap((c) => [
-        { value: `c:${c.id}`, label: `${chapterLabel(c)} (כל הפרק)`, group: chapterLabel(c) },
-        ...(c.scenes.length > 1 ? c.scenes.map((s, i) => ({ value: `s:${s.id}`, label: s.title || `סצנה ${i + 1}`, group: chapterLabel(c) })) : []),
-      ])]} />
-  )
-}
-
-const toLink = (v) => v.startsWith('c:') ? { link_chapter_id: v.slice(2), link_scene_id: '' } : v.startsWith('s:') ? { link_chapter_id: '', link_scene_id: v.slice(2) } : { link_chapter_id: '', link_scene_id: '' }
 
 export default function IdeasDialog({ bk, open, onClose, onOpenScene, onOpenChapter }) {
   const [text, setText] = useState('')

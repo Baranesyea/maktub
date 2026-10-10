@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Loading } from '@/components/AppShell'
 import { useNavigate, useParams, useSearchParams, Link } from 'react-router-dom'
-import { Menu as MenuIcon, PanelLeft, Maximize2, Minimize2, BookOpen, Search, MoreVertical, Home, LayoutGrid, FileText, Upload, Download, CalendarClock, Clock, Trash2, Settings, HelpCircle, Check, X, Layers, Undo2, Lightbulb, History } from 'lucide-react'
+import { Menu as MenuIcon, PanelLeft, Maximize2, Minimize2, BookOpen, Search, MoreVertical, Home, LayoutGrid, FileText, Upload, Download, CalendarClock, Clock, Trash2, Settings, HelpCircle, Check, X, Layers, Undo2, Lightbulb, History, Images, BookMarked } from 'lucide-react'
 import { useBook } from '@/hooks/useBook'
 import { useSettings } from '@/lib/settings'
 import { useLayoutMode, useOnScreenKeyboard, keepCaretInView } from '@/hooks/useViewport'
@@ -409,6 +409,8 @@ export default function Workspace() {
           <MenuItem icon={Search} onSelect={() => setDialog('find')}>חיפוש והחלפה</MenuItem>
           <MenuItem icon={History} onSelect={() => scene ? setDialog('versions') : toast('לחצו קודם בתוך סצנה')}>גרסאות של הסצנה</MenuItem>
           <MenuItem icon={Lightbulb} onSelect={() => setDialog('ideas')}>תיבת רעיונות</MenuItem>
+          <MenuItem icon={Images} onSelect={() => navigate(`/book/${bookId}/inspiration`)}>השראה: תמונות ולוח</MenuItem>
+          <MenuItem icon={BookMarked} onSelect={() => navigate(`/book/${bookId}/research`)}>מחקר</MenuItem>
           <MenuSeparator />
           <MenuItem icon={Upload} onSelect={() => navigate(`/book/${bookId}/import`)}>ייבוא קובץ וורד</MenuItem>
           <MenuItem icon={Download} onSelect={() => { setExportChapters(null); setDialog('export') }}>ייצוא לוורד או לפי די אף</MenuItem>

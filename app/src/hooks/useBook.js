@@ -49,7 +49,7 @@ export function chapterLabel(ch) {
   return ch.title || 'פרק'
 }
 
-const EMPTY = { book: null, parts: [], chapters: [], scenes: [], notes: [], characters: [], eras: [], ideas: [] }
+const EMPTY = { book: null, parts: [], chapters: [], scenes: [], notes: [], characters: [], eras: [], ideas: [], inspirations: [], research: [] }
 // Books already loaded in this visit. Moving between screens shows them at once
 // and refreshes from the server quietly, instead of a loading screen every time.
 const cache = new Map()
@@ -70,10 +70,11 @@ export function useBook(bookId) {
     try {
       await flush()
       const q = { book_id: bookId }
-      const [book, parts, chapters, scenes, notes, characters, eras, ideas] = await Promise.all([
+      const [book, parts, chapters, scenes, notes, characters, eras, ideas, inspirations, research] = await Promise.all([
         db.Book.get(bookId),
         db.Part.filter(q), db.Chapter.filter(q), db.Scene.filter(q), db.Note.filter(q),
         db.Character.filter(q), db.Era.filter(q), db.Idea.filter(q),
+        db.Inspiration.filter(q).catch(() => []), db.ResearchNote.filter(q).catch(() => []),
       ])
       // Purge trash older than 30 days.
       const cutoff = Date.now() - TRASH_DAYS * 864e5
@@ -89,6 +90,8 @@ export function useBook(bookId) {
         characters: overlay(characters, 'Character'),
         eras: overlay(eras, 'Era'),
         ideas: overlay(ideas, 'Idea'),
+        inspirations: overlay(inspirations, 'Inspiration'),
+        research: overlay(research, 'ResearchNote'),
       })
     } catch (e) {
       // With a copy on screen, a failed quiet refresh is not an error page.
@@ -104,7 +107,7 @@ export function useBook(bookId) {
   const addLocal = (key, recs) => setData((d) => ({ ...d, [key]: [...d[key], ...recs] }))
   const removeLocal = (key, id) => setData((d) => ({ ...d, [key]: d[key].filter((r) => r.id !== id) }))
 
-  const ENT = { book: 'Book', parts: 'Part', chapters: 'Chapter', scenes: 'Scene', notes: 'Note', characters: 'Character', eras: 'Era', ideas: 'Idea' }
+  const ENT = { book: 'Book', parts: 'Part', chapters: 'Chapter', scenes: 'Scene', notes: 'Note', characters: 'Character', eras: 'Era', ideas: 'Idea', inspirations: 'Inspiration', research: 'ResearchNote' }
 
   const update = useCallback((key, id, patch, opts) => {
     if (key === 'book') setData((d) => ({ ...d, book: { ...d.book, ...patch } }))
