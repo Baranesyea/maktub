@@ -388,7 +388,6 @@ export default function Workspace() {
           {layout !== 'narrow' && <DriveBadge state={drive} onClick={() => navigate('/backup')} />}
         </div>
         <span className="w-1" />
-        {layout === 'wide' && <TextSizeControl value={size} onChange={setSize} />}
         {layout === 'wide' && <SprintButton />}
         {layout !== 'narrow' && <IconButton label={focusMode ? 'צא ממצב ריכוז (Esc)' : 'מצב ריכוז'} onClick={() => setFocusMode((x) => !x)} active={focusMode} data-testid="focus-toggle" data-tour="focus">{focusMode ? <Minimize2 size={18} /> : <Maximize2 size={18} />}</IconButton>}
         {layout === 'wide' && <IconButton label="מצב קריאה" onClick={() => navigate(`/book/${bookId}/read${chapterId ? `?ch=${chapterId}` : ''}`)} data-testid="reading-toggle" data-tour="reading"><BookOpen size={18} /></IconButton>}
@@ -399,8 +398,8 @@ export default function Workspace() {
             <>
               <MenuItem icon={BookOpen} onSelect={() => navigate(`/book/${bookId}/read${chapterId ? `?ch=${chapterId}` : ''}`)}>מצב קריאה</MenuItem>
               {layout === 'narrow' && <MenuItem icon={Maximize2} onSelect={() => setFocusMode(true)}>מצב ריכוז</MenuItem>}
-              <MenuItem onSelect={() => setSize(Math.min(32, size + 1))}>הגדל טקסט ({size})</MenuItem>
-              <MenuItem onSelect={() => setSize(Math.max(13, size - 1))}>הקטן טקסט</MenuItem>
+              {layout === 'narrow' && <MenuItem onSelect={() => setSize(Math.min(32, size + 1))}>הגדל טקסט ({size})</MenuItem>}
+              {layout === 'narrow' && <MenuItem onSelect={() => setSize(Math.max(13, size - 1))}>הקטן טקסט</MenuItem>}
               {layout === 'narrow' && <MenuItem onSelect={() => navigate('/backup')}>גיבוי</MenuItem>}
               <MenuSeparator />
             </>
@@ -435,26 +434,29 @@ export default function Workspace() {
               <div className="flex-1 bg-black/30" />
             </div>
           ) : (
-            <aside className="w-[272px] shrink-0 border-e border-line">
+            <aside className="w-[236px] shrink-0 border-e border-line">
               <BookTree bk={bk} activeChapterId={chapterId} activeSceneId={sceneId} onOpenChapter={openChapter} onOpenScene={openScene} noteCounts={noteCounts} onExport={(ids) => { setExportChapters(ids); setDialog('export') }} />
             </aside>
           )
         )}
 
         <main className="relative flex-1 min-w-0 flex flex-col bg-surface" data-tour="editor">
+          {/* Formatting sits above the text, like a word processor's toolbar. */}
+          {view === 'write' && !focusMode && (
+            <div className="chrome h-11 shrink-0 border-b border-line flex items-center justify-center gap-2 px-2 bg-surface overflow-x-auto" onMouseDown={(e) => { if (e.target.closest('button')) e.preventDefault() }} data-testid="format-strip">
+              <FormatBar editor={activeEditor} onAddNote={addNote} onSplit={splitHere} compact={layout === 'narrow'} bare />
+              {layout !== 'narrow' && <span className="w-px h-5 bg-line" aria-hidden />}
+              {layout !== 'narrow' && <TextSizeControl value={size} onChange={setSize} bare />}
+            </div>
+          )}
           {view === 'board'
             ? <BoardView bk={bk} noteCounts={noteCounts} onOpenScene={openScene} />
             : chapter
               ? <ChapterView ref={chapterRef} bk={bk} chapter={chapter} activeSceneId={scene?.id} notes={bk.notes} onSceneFocus={onSceneFocus} onEditorReady={onEditorReady} onSceneChange={onSceneChange} onAnchorClick={onAnchorClick} onFirstEdit={onFirstEdit} onContextMenu={setTextMenu} />
               : <EmptyBook bk={bk} onOpenChapter={openChapter} />}
           {backPos && backPos.chapterId !== chapterId && (
-            <div className="absolute bottom-16 inset-x-0 flex justify-center pointer-events-none z-10">
+            <div className="absolute bottom-6 inset-x-0 flex justify-center pointer-events-none z-10">
               <Button className="pointer-events-auto shadow-[var(--shadow)]" onClick={goBack} data-testid="note-back"><Undo2 size={15} />חזרה לאיפה שהייתי</Button>
-            </div>
-          )}
-          {view === 'write' && !focusMode && (
-            <div className="chrome h-12 shrink-0 border-t border-line flex items-center justify-center bg-raised overflow-x-auto">
-              <FormatBar editor={activeEditor} onAddNote={addNote} onSplit={splitHere} compact={layout === 'narrow'} />
             </div>
           )}
         </main>

@@ -216,7 +216,7 @@ export default function BookTree({ bk, activeChapterId, activeSceneId, onOpenCha
                                 ) : <span className="w-6 shrink-0 flex justify-center"><StatusDot status={ch.scenes[0]?.status} /></span>}
                                 {renaming?.id === ch.id
                                   ? <InlineRename value={ch.title} onDone={(v) => { if (v !== null) bk.update('chapters', ch.id, { title: v }); setRenaming(null) }} />
-                                  : <span className="flex-1 min-w-0 truncate font-medium text-[15px]">{chapterLabel(ch)}</span>}
+                                  : <span className="flex-1 min-w-0 truncate text-[15px]">{chapterLabel(ch)}</span>}
                                 {ch.unused && <EyeOff size={13} className="text-muted" aria-label="לא בשימוש" />}
                                 <NotesBadge n={chapterNotes(ch)} />
                                 <span className="text-[12px] text-muted tabular-nums shrink-0">{formatNumber(ch.words)}</span>

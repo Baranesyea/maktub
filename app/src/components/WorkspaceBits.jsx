@@ -27,9 +27,9 @@ export function SaveStatus() {
 }
 
 /** Plus and minus change only the book text, never the whole interface. */
-export function TextSizeControl({ value, onChange, min = 13, max = 32, label = 'גודל הטקסט' }) {
+export function TextSizeControl({ value, onChange, min = 13, max = 32, label = 'גודל הטקסט', bare }) {
   return (
-    <div className="inline-flex items-center rounded-lg border border-line bg-surface" role="group" aria-label={label} data-tour="textsize">
+    <div className={cn('inline-flex items-center rounded-lg', !bare && 'border border-line bg-surface')} role="group" aria-label={label} data-tour="textsize">
       <button className="hit px-2 text-lg leading-none text-muted hover:text-fg" onClick={() => onChange(Math.max(min, value - 1))} aria-label="הקטן טקסט" data-testid="size-down">−</button>
       <span className="text-xs tabular-nums w-7 text-center" data-testid="size-value">{value}</span>
       <button className="hit px-2 text-lg leading-none text-muted hover:text-fg" onClick={() => onChange(Math.min(max, value + 1))} aria-label="הגדל טקסט" data-testid="size-up">+</button>
@@ -37,7 +37,7 @@ export function TextSizeControl({ value, onChange, min = 13, max = 32, label = '
   )
 }
 
-export function FormatBar({ editor, onAddNote, onSplit, className, compact }) {
+export function FormatBar({ editor, onAddNote, onSplit, className, compact, bare }) {
   const [, force] = useState(0)
   useEffect(() => {
     if (!editor) return
@@ -48,7 +48,7 @@ export function FormatBar({ editor, onAddNote, onSplit, className, compact }) {
   const run = (fn) => () => { if (editor) fn(editor.chain().focus()).run() }
   const on = (name, attrs) => !!editor?.isActive(name, attrs)
   return (
-    <div className={cn('inline-flex items-center rounded-lg border border-line bg-raised p-0.5', className)} role="toolbar" aria-label="עיצוב טקסט">
+    <div className={cn('inline-flex items-center', !bare && 'rounded-lg border border-line bg-raised p-0.5', className)} role="toolbar" aria-label="עיצוב טקסט">
       <IconButton label="בטל (Ctrl+Z)" onClick={run((c) => c.undo())} disabled={!editor}><Undo2 size={16} /></IconButton>
       <IconButton label="בצע שוב" onClick={run((c) => c.redo())} disabled={!editor}><Redo2 size={16} /></IconButton>
       <Sep />
