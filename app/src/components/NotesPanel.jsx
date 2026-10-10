@@ -3,7 +3,7 @@ import { Check, Trash2 } from 'lucide-react'
 import { chapterLabel } from '@/hooks/useBook'
 import { NOTE_TYPES } from '@/lib/text'
 import { cn } from '@/lib/utils'
-import { IconButton, Button } from '@/components/ui'
+import { IconButton, Button, Select } from '@/components/ui'
 
 /** Orders open notes the way they appear in the book: chapter, scene, position in the text. */
 export function orderedNotes(bk, notes) {
@@ -78,9 +78,8 @@ export default function NotesPanel({ bk, chapterId, activeNoteId, onJump, onDone
                   aria-label="תוכן הפתק"
                 />
                 <div className="flex items-center gap-1 mt-1" onClick={(e) => e.stopPropagation()}>
-                  <select value={n.type || 'fix'} onChange={(e) => onRetype(n, e.target.value)} className="h-7 rounded-md border border-line bg-surface text-[12px] px-1 text-muted" aria-label="סוג הפתק">
-                    {Object.entries(NOTE_TYPES).map(([k, x]) => <option key={k} value={k}>{x.label}</option>)}
-                  </select>
+                  <Select size="xs" value={n.type || 'fix'} onChange={(v) => onRetype(n, v)} aria-label="סוג הפתק" className="bg-surface"
+                    options={Object.entries(NOTE_TYPES).map(([k, x]) => ({ value: k, label: x.label }))} />
                   <div className="flex-1" />
                   {n.done
                     ? <Button size="sm" variant="ghost" onClick={() => onDone(n, false)}>החזר</Button>

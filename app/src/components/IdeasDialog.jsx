@@ -2,22 +2,18 @@
 // or a scene if you want, and can become a scene of its own.
 import { useState } from 'react'
 import { Plus, Trash2, ArrowUpLeft, Link2, X } from 'lucide-react'
-import { Dialog, Button, IconButton, inputClass } from '@/components/ui'
+import { Dialog, Button, IconButton, inputClass, Select } from '@/components/ui'
 import { chapterLabel } from '@/hooks/useBook'
 import { cn } from '@/lib/utils'
 import { toast } from '@/lib/toast'
 
 function LinkPicker({ bk, value, onChange }) {
   return (
-    <select className={cn(inputClass, 'h-9 text-sm w-full')} value={value} onChange={(e) => onChange(e.target.value)} aria-label="קישור לפרק או לסצנה" data-testid="idea-link-select">
-      <option value="">בלי קישור</option>
-      {bk.flatChapters.map((c) => (
-        <optgroup key={c.id} label={chapterLabel(c)}>
-          <option value={`c:${c.id}`}>{chapterLabel(c)} (כל הפרק)</option>
-          {c.scenes.length > 1 && c.scenes.map((s, i) => <option key={s.id} value={`s:${s.id}`}>{s.title || `סצנה ${i + 1}`}</option>)}
-        </optgroup>
-      ))}
-    </select>
+    <Select size="sm" value={value} onChange={onChange} aria-label="קישור לפרק או לסצנה" data-testid="idea-link-select" className="w-full"
+      options={[{ value: '', label: 'בלי קישור' }, ...bk.flatChapters.flatMap((c) => [
+        { value: `c:${c.id}`, label: `${chapterLabel(c)} (כל הפרק)`, group: chapterLabel(c) },
+        ...(c.scenes.length > 1 ? c.scenes.map((s, i) => ({ value: `s:${s.id}`, label: s.title || `סצנה ${i + 1}`, group: chapterLabel(c) })) : []),
+      ])]} />
   )
 }
 

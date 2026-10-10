@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { BrowserRouter as Router, Route, Routes, Navigate, Outlet, useLocation } from 'react-router-dom'
+import { BrowserRouter as Router, Route, Routes, Navigate, Outlet } from 'react-router-dom'
 import { AuthProvider, useAuth } from '@/lib/AuthContext'
 import { SettingsProvider, useSettings } from '@/lib/settings'
 import { bindDriveSettings, startDriveLoop } from '@/lib/drive'
@@ -28,11 +28,7 @@ function DriveBinder() {
 /** Everything behind login: settings, Drive, and the app itself. */
 function Protected() {
   const { isAuthenticated } = useAuth()
-  const location = useLocation()
-  if (!isAuthenticated) {
-    const back = location.pathname + location.search
-    return <Navigate to={`/login${back !== '/' ? `?returnTo=${encodeURIComponent(back)}` : ''}`} replace />
-  }
+  if (!isAuthenticated) return <Navigate to="/login" replace />
   return (
     <SettingsProvider>
       <DriveBinder />

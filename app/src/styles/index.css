@@ -210,7 +210,8 @@ button { -webkit-user-select: none; user-select: none; }
 .note-strip button { position: absolute; inset-inline: 1px; height: 4px; border-radius: 2px; pointer-events: auto; padding: 0; border: 0; cursor: pointer; }
 
 /* Tour spotlight */
-.tour-spot { position: fixed; border-radius: 10px; box-shadow: 0 0 0 9999px rgba(10, 12, 18, 0.55); transition: all 0.25s ease; pointer-events: none; z-index: 90; }
+/* The spotlight jumps straight to the next step: animating a screen-wide shadow made every step feel late. */
+.tour-spot { position: fixed; border-radius: 10px; box-shadow: 0 0 0 9999px rgba(10, 12, 18, 0.55); pointer-events: none; z-index: 90; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
@@ -219,3 +220,6 @@ button { -webkit-user-select: none; user-select: none; }
 /* Splash caret: a plain on/off blink, like a text cursor. */
 .splash-caret { animation: splash-caret 0.9s steps(1) infinite; }
 @keyframes splash-caret { 50% { opacity: 0; } }
+
+/* Checkboxes and radios in the theme colour, not the browser blue. */
+input[type="checkbox"], input[type="radio"] { accent-color: var(--accent); }

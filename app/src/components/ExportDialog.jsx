@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { FileDown, Printer } from 'lucide-react'
-import { Dialog, Button } from '@/components/ui'
+import { Dialog, Button, Select } from '@/components/ui'
 import { chapterLabel } from '@/hooks/useBook'
 import { toast } from '@/lib/toast'
 import { cn } from '@/lib/utils'
@@ -63,18 +63,13 @@ export default function ExportDialog({ bk, open, onClose, initialChapters }) {
         <div className="grid sm:grid-cols-2 gap-3 text-sm">
           <div className="flex flex-col gap-1.5">
             <span className="text-muted">עיצוב (וורד)</span>
-            <select className="h-10 rounded-lg border border-line bg-bg px-2" value={format} onChange={(e) => setFormat(e.target.value)} aria-label="עיצוב">
-              <option value="manuscript">כתב יד להגשה: 12, רווח כפול, הזחה</option>
-              <option value="book">לקריאה: רווח רגיל</option>
-            </select>
+            <Select value={format} onChange={setFormat} aria-label="עיצוב" className="w-full"
+              options={[{ value: 'manuscript', label: 'כתב יד להגשה: 12, רווח כפול, הזחה' }, { value: 'book', label: 'לקריאה: רווח רגיל' }]} />
           </div>
           <div className="flex flex-col gap-1.5">
             <span className="text-muted">גופן</span>
-            <select className="h-10 rounded-lg border border-line bg-bg px-2" value={font} onChange={(e) => setFont(e.target.value)} aria-label="גופן ייצוא">
-              <option value="david">דוד</option>
-              <option value="frank">פרנק רוהל</option>
-              <option value="arial">אריאל</option>
-            </select>
+            <Select value={font} onChange={setFont} aria-label="גופן ייצוא" className="w-full"
+              options={[{ value: 'david', label: 'דוד', style: { fontFamily: "'David Libre', David, serif" } }, { value: 'frank', label: 'פרנק רוהל', style: { fontFamily: "'Frank Ruhl Libre', serif" } }, { value: 'arial', label: 'אריאל', style: { fontFamily: 'Arial, sans-serif' } }]} />
           </div>
         </div>
         <p className="text-xs text-muted">סצנות ופרקים שסומנו "לא בשימוש" לא מיוצאים. פתקים לא מופיעים בקובץ.</p>

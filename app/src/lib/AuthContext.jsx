@@ -69,7 +69,7 @@ export const AuthProvider = ({ children }) => {
 
   const navigateToLogin = async () => {
     const base44 = await sdk();
-    base44.auth.redirectToLogin(window.location.href);
+    base44.auth.redirectToLogin(window.location.origin + '/');
   };
 
   return (

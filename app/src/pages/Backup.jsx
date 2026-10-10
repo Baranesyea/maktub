@@ -8,7 +8,7 @@ import { subscribeSave } from '@/lib/outbox'
 import { journalStats } from '@/lib/journal'
 import { sendBackupNow, WEEKDAY_NAMES } from '@/lib/backup'
 import { Page, Panel } from '@/components/AppShell'
-import { Button, inputClass } from '@/components/ui'
+import { Button, Select } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import { toast } from '@/lib/toast'
 import { db, ENTITIES } from '@/api/db'
@@ -90,9 +90,8 @@ export default function BackupPage() {
             {mail.enabled && (
               <label className="inline-flex items-center gap-2 text-sm">
                 ביום
-                <select className={cn(inputClass, 'h-9')} value={mail.day ?? 5} onChange={(e) => setMail({ day: +e.target.value })} aria-label="יום בשבוע" data-testid="backup-email-day">
-                  {WEEKDAY_NAMES.map((n, i) => <option key={i} value={i}>{n}</option>)}
-                </select>
+                <Select size="sm" value={mail.day ?? 5} onChange={(v) => setMail({ day: +v })} aria-label="יום בשבוע" data-testid="backup-email-day"
+                  options={WEEKDAY_NAMES.map((n, i) => ({ value: i, label: n }))} />
                 בבוקר
               </label>
             )}

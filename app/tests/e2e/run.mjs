@@ -36,6 +36,8 @@ async function seed(page) {
   })
 }
 
+// Pick from one of the app's own menus (they replaced the browser's dropdowns).
+const choose = async (page, testid, value) => { await page.click(`[data-testid="${testid}"]`); await page.click(`[data-testid="${testid}-option-${value}"]`) }
 const store = (page, name) => page.evaluate((n) => JSON.parse(localStorage.getItem('maktub_mock_' + n) || '[]'), name)
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 function assert(cond, msg) { if (!cond) throw new Error(msg) }
@@ -356,7 +358,7 @@ await test('ideas: open from the rail, add one linked to a chapter, it opens tha
   await page.waitForSelector('[data-testid="ideas-dialog"]')
   await page.fill('[data-testid="idea-input"]', 'אולי האח בכלל לא עבר איתם')
   await page.click('[data-testid="idea-link"]')
-  await page.selectOption('[data-testid="idea-link-select"]', 'c:c2')
+  await choose(page, 'idea-link-select', 'c:c2')
   await page.click('[data-testid="idea-add"]')
   await waitFor(async () => (await store(page, 'Idea')).some((i) => i.link_chapter_id === 'c2'), 'idea saved with link')
   await page.getByRole('button', { name: /פרק 2/ }).click()
@@ -635,8 +637,8 @@ await test('scene time: fuzzy date "קיץ 2015" and era', async (page) => {
 // ---------------------------------------------------------------- Settings, tour
 await test('settings: system and writing fonts are separate', async (page) => {
   await page.goto(BASE + '/settings')
-  await page.selectOption('[data-testid="ui-font"]', 'rubik')
-  await page.selectOption('[data-testid="write-font"]', 'mockup')
+  await choose(page, 'ui-font', 'rubik')
+  await choose(page, 'write-font', 'mockup')
   const ui = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--ui-font'))
   const wr = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--write-font'))
   assert(ui.includes('Rubik') && wr.includes('Mockup'), ui + ' / ' + wr)
@@ -707,6 +709,25 @@ await test('navigation rail: home, writing, plan, timeline and settings', async 
   assert(!(await page.locator('[data-testid="drive-client-id"]').count()), 'no technical Drive setup anywhere')
 })
 
+await test('guided tour: the card sits above the shade and steps change at once', async (page) => {
+  await page.evaluate(() => { const rows = JSON.parse(localStorage.getItem('maktub_mock_UserSettings')); rows[0].tour_done = false; localStorage.setItem('maktub_mock_UserSettings', JSON.stringify(rows)); localStorage.removeItem('maktub_settings_cache') })
+  await openBook(page)
+  await page.waitForSelector('[data-testid="tour-card"]', { timeout: 8000 })
+  for (let k = 0; k < 4; k++) {
+    // The shade lets clicks through, so compare stacking, not hit-testing.
+    const onTop = await page.evaluate(() => {
+      const z = (sel) => Number(getComputedStyle(document.querySelector(sel)).zIndex) || 0
+      return z('[data-testid="tour-card"]') > z('.tour-spot')
+    })
+    assert(onTop, 'tour card covered at step ' + (k + 1))
+    const before = await page.textContent('[data-testid="tour-card"]')
+    const t0 = Date.now()
+    await page.click('[data-testid="tour-next"]')
+    await waitFor(async () => (await page.textContent('[data-testid="tour-card"]')) !== before, 'next step', 2000)
+    assert(Date.now() - t0 < 400, 'next step took ' + (Date.now() - t0) + 'ms')
+  }
+})
+
 await test('guided tour waits for a slow server before it starts', async (page) => {
   await page.evaluate(() => { const rows = JSON.parse(localStorage.getItem('maktub_mock_UserSettings')); rows[0].tour_done = false; localStorage.setItem('maktub_mock_UserSettings', JSON.stringify(rows)); localStorage.removeItem('maktub_settings_cache'); localStorage.setItem('maktub_mock_latency', '2500') })
   await page.goto(BASE + '/book/b1')
@@ -722,7 +743,7 @@ await test('backup page: from the rail, layers shown, weekly email on, send now'
   await page.waitForSelector('[data-testid="backup"]')
   for (const id of ['layer-instant', 'layer-device', 'layer-versions', 'layer-email', 'drive-section']) assert(await page.locator(`[data-testid="${id}"]`).isVisible(), id)
   await page.click('[data-testid="backup-email-toggle"]')
-  await page.selectOption('[data-testid="backup-email-day"]', '0')
+  await choose(page, 'backup-email-day', '0')
   await waitFor(async () => { const u = (await store(page, 'UserSettings'))[0]; return u.backup_email?.enabled === true && u.backup_email?.day === 0 }, 'weekly email saved')
   await page.click('[data-testid="backup-email-now"]')
   await waitFor(async () => !!(await store(page, 'UserSettings'))[0].backup_email?.last_sent_at, 'send now recorded')
@@ -780,6 +801,30 @@ await test('entrance splash: the wordmark is typed once per session, then the ap
   await waitFor(async () => (await page.locator('[data-testid="splash"]').count()) === 0, 'splash leaves', 5000)
   await page.reload(); await sleep(1200)
   assert((await page.locator('[data-testid="splash"]').count()) === 0, 'no splash again after a refresh in the same session')
+})
+
+await test('moving between screens of an open book is instant, even on a slow server', async (page) => {
+  await openBook(page)
+  await page.evaluate(() => localStorage.setItem('maktub_mock_latency', '800'))
+  for (const [nav, sel] of [['nav-plan', '[data-testid="nav-plan"]'], ['nav-write', '.ProseMirror'], ['nav-timeline', '[data-testid="nav-timeline"]'], ['nav-home', '[data-testid="continue-writing"]'], ['nav-write', '.ProseMirror']]) {
+    await page.click(`[data-testid="${nav}"]`)
+    await sleep(60)
+    assert((await page.locator('[data-testid="loading"]').count()) === 0, 'loading screen after ' + nav)
+    await page.waitForSelector(sel, { timeout: 3000 })
+  }
+  await page.evaluate(() => localStorage.removeItem('maktub_mock_latency'))
+})
+
+await test('no browser dropdowns: every choice uses the app menu', async (page) => {
+  await openBook(page)
+  const id = new URL(page.url()).pathname.split('/')[2]
+  for (const path of ['/settings', '/backup', `/book/${id}/plan`, `/book/${id}/timeline`, `/book/${id}`]) {
+    await page.goto(BASE + path); await sleep(700)
+    assert((await page.locator('select').count()) === 0, 'native select on ' + path)
+  }
+  await page.goto(BASE + '/settings'); await sleep(500)
+  await choose(page, 'write-font', 'optimum')
+  assert((await page.getAttribute('[data-testid="write-font"]', 'data-value')) === 'optimum', 'font chosen from the menu')
 })
 
 await test('refresh: one loading look from sign-in check to the open book', async (page) => {

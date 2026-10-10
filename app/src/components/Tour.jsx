@@ -9,7 +9,7 @@ export const startTour = () => window.dispatchEvent(new Event('maktub-tour-start
 const STEPS = [
   { sel: '[data-tour="tree"]', title: 'עץ הספר', text: 'כאן כל הפרקים והסצנות. גוררים כדי לשנות סדר: פרק זז עם כל הסצנות שלו. באייפד: לחיצה ארוכה ואז גרירה. הקליקו פעמיים כדי לשנות שם.' },
   { sel: '[data-tour="editor"]', title: 'כאן כותבים', text: 'פרק מוצג כעמוד אחד רציף של הסצנות שלו. אין כפתור שמירה: כל מילה נשמרת לבד, קודם במכשיר ואחר כך בשרת.' },
-  { sel: '[data-tour="save"]', title: 'מצב השמירה', text: 'וי ירוק: הכול שמור בשרת. וי אפור: שומר, או שאין אינטרנט והשינויים שמורים במחשב עד שהחיבור יחזור. העבירו את העכבר לפרטים.' },
+  { sel: '[data-tour="save"]', title: 'מצב השמירה', text: 'הסימן הירוק: הכול שמור בשרת. הסימן האפור: שומר, או שאין אינטרנט והשינויים שמורים במחשב עד שהחיבור יחזור. העבירו את העכבר לפרטים.' },
   { sel: '[data-tour="side"]', title: 'חלונית הצד', text: 'פתקים, פרטי הסצנה (סטטוס, תקציר, מתי זה קרה), ודמויות ומקומות. תיבת הרעיונות נפתחת מהסרגל הימני.' },
   { sel: '[data-tour="addnote"]', title: 'פתק על הטקסט', text: 'מסמנים מילה, משפט או פסקה ולוחצים עליהם בכפתור הימני של העכבר. באייפד: הכפתור הזה. הטקסט נשאר מסומן, והפתק מופיע בשוליים ובחלונית.' },
   { sel: '[data-tour="focus"]', title: 'ריכוז וקריאה', text: 'מצב ריכוז מעלים הכול חוץ מהטקסט. ליד: מצב קריאה, כמו ספר. פלוס ומינוס מגדילים רק את הטקסט.' },
@@ -102,7 +102,7 @@ export default function Tour() {
     <div className="fixed inset-0 z-[95]" role="dialog" aria-modal="true" aria-label="סיור מודרך" data-testid="tour">
       <div className="absolute inset-0" onClick={finish} />
       <div className="tour-spot" style={rect} />
-      <div className="absolute w-[320px] max-w-[calc(100vw-24px)] rounded-2xl bg-surface border border-line shadow-[var(--shadow)] p-4 flex flex-col gap-2" style={{ top: bubbleTop, left: bubbleLeft }} dir="rtl">
+      <div className="absolute z-[91] w-[320px] max-w-[calc(100vw-24px)] rounded-2xl bg-surface border border-line shadow-[var(--shadow)] p-4 flex flex-col gap-2" style={{ top: bubbleTop, left: bubbleLeft }} dir="rtl" data-testid="tour-card">
         <div className="text-xs text-muted">{i + 1} מתוך {steps.length}</div>
         <div className="font-semibold">{step.title}</div>
         <div className="text-sm leading-6">{step.text}</div>

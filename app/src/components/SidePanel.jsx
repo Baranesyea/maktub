@@ -2,7 +2,7 @@ import { useState } from 'react'
 import * as Tabs from '@radix-ui/react-tabs'
 import { Plus, Trash2, History, X } from 'lucide-react'
 import NotesPanel from '@/components/NotesPanel'
-import { Button, IconButton, inputClass } from '@/components/ui'
+import { Button, IconButton, inputClass, Select } from '@/components/ui'
 import { SCENE_STATUS } from '@/lib/text'
 import { formatTime, parseFuzzy, resolveTime, ageAt } from '@/lib/timeline'
 import { chapterLabel } from '@/hooks/useBook'
@@ -130,24 +130,19 @@ export function StoryTimeEditor({ bk, scene, onChange }) {
         </>
       )}
       {st.type === 'era' && (
-        <select className={inputClass} value={st.era_id || ''} onChange={(e) => set({ era_id: e.target.value })} aria-label="תקופה">
-          <option value="">בחרו תקופה</option>
-          {bk.eras.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
-        </select>
+        <Select value={st.era_id || ''} onChange={(v) => set({ era_id: v })} aria-label="תקופה" placeholder="בחרו תקופה" className="w-full"
+          options={bk.eras.map((e) => ({ value: e.id, label: e.name }))} />
       )}
       {st.type === 'relative' && (
         <div className="flex flex-col gap-2">
           <div className="flex gap-2 items-center">
             <input type="number" className={cn(inputClass, 'w-24')} value={Math.abs(st.offset_days || 0)} onChange={(e) => set({ offset_days: Math.sign(st.offset_days || 1) * Math.abs(+e.target.value || 0) })} aria-label="מספר ימים" />
             <span>ימים</span>
-            <select className={inputClass} value={(st.offset_days || 0) < 0 ? 'before' : 'after'} onChange={(e) => set({ offset_days: (e.target.value === 'before' ? -1 : 1) * Math.abs(st.offset_days || 0) })} aria-label="לפני או אחרי">
-              <option value="after">אחרי</option><option value="before">לפני</option>
-            </select>
+            <Select value={(st.offset_days || 0) < 0 ? 'before' : 'after'} onChange={(v) => set({ offset_days: (v === 'before' ? -1 : 1) * Math.abs(st.offset_days || 0) })} aria-label="לפני או אחרי"
+              options={[{ value: 'after', label: 'אחרי' }, { value: 'before', label: 'לפני' }]} />
           </div>
-          <select className={inputClass} value={st.anchor_scene_id || ''} onChange={(e) => set({ anchor_scene_id: e.target.value })} aria-label="סצנה">
-            <option value="">בחרו סצנה</option>
-            {bk.flatChapters.flatMap((c) => c.scenes.filter((s) => s.id !== scene.id).map((s) => <option key={s.id} value={s.id}>{chapterLabel(c)} · {s.title || 'סצנה'}</option>))}
-          </select>
+          <Select value={st.anchor_scene_id || ''} onChange={(v) => set({ anchor_scene_id: v })} aria-label="סצנה" placeholder="בחרו סצנה" className="w-full"
+            options={bk.flatChapters.flatMap((c) => c.scenes.filter((s) => s.id !== scene.id).map((s) => ({ value: s.id, label: s.title || 'סצנה', group: chapterLabel(c) })))} />
         </div>
       )}
       <div className="text-xs text-muted">{formatTime(scene, ctx)}</div>
@@ -162,9 +157,8 @@ function PeoplePanel({ bk }) {
   return (
     <div className="p-3 flex flex-col gap-3">
       <div className="flex gap-2">
-        <select className={inputClass} value={kind} onChange={(e) => setKind(e.target.value)} aria-label="סוג">
-          <option value="character">דמות</option><option value="place">מקום</option>
-        </select>
+        <Select value={kind} onChange={setKind} aria-label="סוג" className="shrink-0"
+          options={[{ value: 'character', label: 'דמות' }, { value: 'place', label: 'מקום' }]} />
         <input className={cn(inputClass, 'flex-1 min-w-0')} value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && add()} placeholder="שם" />
         <IconButton label="הוסף" onClick={add}><Plus size={18} /></IconButton>
       </div>

@@ -8,17 +8,10 @@ import { Logo } from '@/components/Logo'
 
 const sdk = async () => (await import('@/api/base44Client')).base44
 
+// Signing in always opens the home screen, which leads straight back to the book in progress,
+// rather than whatever screen the writer was on when they signed out.
 export function safeReturnTo() {
-  const raw = new URLSearchParams(window.location.search).get('returnTo')
-  if (!raw) return '/'
-  try {
-    const url = new URL(raw, window.location.origin)
-    if (url.origin !== window.location.origin) return '/'
-    for (const p of ['access_token', 'clear_access_token', 'app_id', 'app_base_url', 'functions_version', 'from_url']) url.searchParams.delete(p)
-    const path = url.pathname + url.search
-    if (!path.startsWith('/') || path.startsWith('//') || path.includes('\\')) return '/'
-    return path
-  } catch { return '/' }
+  return '/'
 }
 
 function Layout({ title, subtitle, children, footer }) {

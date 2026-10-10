@@ -4,7 +4,7 @@ import { useSettings, THEMES } from '@/lib/settings'
 import { FONTS } from '@/lib/fonts'
 import { useAuth } from '@/lib/AuthContext'
 import { Page, Panel } from '@/components/AppShell'
-import { Button, inputClass } from '@/components/ui'
+import { Button, Select } from '@/components/ui'
 import { startTour } from '@/components/Tour'
 import { cn, isMock } from '@/lib/utils'
 
@@ -27,6 +27,12 @@ function Row({ label, hint, children }) {
     </div>
   )
 }
+
+// Each font is listed in its own typeface, yours first.
+const fontOptions = (fits) => [
+  ...FONTS.filter((f) => fits(f) && f.mine).map((f) => ({ value: f.id, label: f.name, group: 'שלך', style: { fontFamily: f.css } })),
+  ...FONTS.filter((f) => fits(f) && !f.mine).map((f) => ({ value: f.id, label: f.name, group: 'חינמיים', style: { fontFamily: f.css } })),
+]
 
 export default function SettingsPage() {
   const { settings, update } = useSettings()
@@ -72,16 +78,12 @@ export default function SettingsPage() {
 
       <Panel title="גופן">
         <Row label="גופן מערכת" hint="תפריטים, עץ הספר וכפתורים.">
-          <select className={cn(inputClass, 'w-full max-w-xs')} value={settings.ui_font} onChange={(e) => update({ ui_font: e.target.value })} data-testid="ui-font">
-            <optgroup label="שלך">{FONTS.filter((f) => f.ui && f.mine).map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}</optgroup>
-            <optgroup label="חינמיים">{FONTS.filter((f) => f.ui && !f.mine).map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}</optgroup>
-          </select>
+          <Select value={settings.ui_font} onChange={(v) => update({ ui_font: v })} data-testid="ui-font" aria-label="גופן מערכת" className="w-full max-w-xs"
+            options={fontOptions((f) => f.ui)} />
         </Row>
         <Row label="גופן כתיבה" hint="הטקסט של הספר.">
-          <select className={cn(inputClass, 'w-full max-w-xs')} value={settings.write_font} onChange={(e) => update({ write_font: e.target.value })} data-testid="write-font">
-            <optgroup label="שלך">{FONTS.filter((f) => f.write && f.mine).map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}</optgroup>
-            <optgroup label="חינמיים">{FONTS.filter((f) => f.write && !f.mine).map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}</optgroup>
-          </select>
+          <Select value={settings.write_font} onChange={(v) => update({ write_font: v })} data-testid="write-font" aria-label="גופן כתיבה" className="w-full max-w-xs"
+            options={fontOptions((f) => f.write)} />
           <div className="rounded-lg border border-line bg-raised p-4 mt-3">
             <p className="prose-write m-0">בקיץ ההוא, כשהמזגן במטבח עוד השמיע את הרעש הזה, אמא שלי החליטה שאנחנו עוברים דירה.</p>
           </div>

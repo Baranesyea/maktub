@@ -2,7 +2,7 @@
 import { forwardRef } from 'react'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import * as DialogPrimitive from '@radix-ui/react-dialog'
-import { X } from 'lucide-react'
+import { X, ChevronDown, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export const Button = forwardRef(function Button({ variant = 'default', size = 'md', className, ...props }, ref) {
@@ -55,6 +55,56 @@ export function MenuItem({ children, onSelect, danger, disabled, icon: Icon }) {
 }
 export const MenuSeparator = () => <DropdownMenu.Separator className="my-1 h-px bg-line" />
 export const MenuLabel = ({ children }) => <DropdownMenu.Label className="px-2.5 py-1 text-xs text-muted">{children}</DropdownMenu.Label>
+
+/**
+ * A choice from a list, in the app's own menu instead of the browser's.
+ * options: [{ value, label, group?, style? }]; consecutive options with the same group sit under one heading.
+ * size: 'md' (form field), 'sm' (inline), 'xs' (tiny, inside cards).
+ */
+export function Select({ value, onChange, options, placeholder = 'בחרו', size = 'md', className, menuClassName, 'aria-label': ariaLabel, 'data-testid': testid, align = 'start' }) {
+  const current = options.find((o) => String(o.value) === String(value ?? ''))
+  const h = { md: 'h-10 px-3 text-[15px]', sm: 'h-9 px-2.5 text-sm', xs: 'h-7 px-2 text-[12px] text-muted' }[size]
+  let lastGroup
+  return (
+    <DropdownMenu.Root dir="rtl" modal={false}>
+      <DropdownMenu.Trigger asChild>
+        <button
+          type="button"
+          aria-label={ariaLabel}
+          data-testid={testid}
+          data-value={current ? String(current.value) : ''}
+          className={cn('inline-flex items-center justify-between gap-2 rounded-lg border border-line bg-bg text-fg outline-none focus-visible:border-accent data-[state=open]:border-accent min-w-0', h, className)}
+        >
+          <span className="truncate" style={current?.style}>{current ? current.label : <span className="text-faint">{placeholder}</span>}</span>
+          <ChevronDown size={size === 'xs' ? 13 : 15} className="shrink-0 opacity-60" />
+        </button>
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content align={align} sideOffset={4} collisionPadding={8} dir="rtl"
+          className={cn('z-[60] min-w-[var(--radix-dropdown-menu-trigger-width)] max-h-[min(360px,var(--radix-dropdown-menu-content-available-height))] overflow-y-auto rounded-xl border border-line bg-surface p-1.5 shadow-[var(--shadow)] text-[15px]', menuClassName)}>
+          {options.map((o) => {
+            const head = o.group && o.group !== lastGroup ? o.group : null
+            lastGroup = o.group
+            const on = String(o.value) === String(value ?? '')
+            return (
+              <div key={`${o.group || ''}:${o.value}`}>
+                {head && <DropdownMenu.Label className="px-2.5 pt-2 pb-1 text-xs text-muted">{head}</DropdownMenu.Label>}
+                <DropdownMenu.Item
+                  onSelect={() => onChange(o.value)}
+                  data-testid={testid ? `${testid}-option-${o.value}` : undefined}
+                  className={cn('flex items-center gap-2 rounded-lg px-2.5 min-h-[36px] cursor-pointer outline-none data-[highlighted]:bg-sunk', on && 'font-medium')}
+                >
+                  <span className="w-4 shrink-0">{on && <Check size={14} />}</span>
+                  <span className="flex-1" style={o.style}>{o.label}</span>
+                </DropdownMenu.Item>
+              </div>
+            )
+          })}
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
+  )
+}
 
 export function Dialog({ open, onOpenChange, title, children, wide, className }) {
   return (

@@ -49,15 +49,23 @@ export function chapterLabel(ch) {
   return ch.title || 'פרק'
 }
 
+const EMPTY = { book: null, parts: [], chapters: [], scenes: [], notes: [], characters: [], eras: [], ideas: [] }
+// Books already loaded in this visit. Moving between screens shows them at once
+// and refreshes from the server quietly, instead of a loading screen every time.
+const cache = new Map()
+
 export function useBook(bookId) {
-  const [data, setData] = useState({ book: null, parts: [], chapters: [], scenes: [], notes: [], characters: [], eras: [], ideas: [] })
-  const [loading, setLoading] = useState(true)
+  const [data, setData] = useState(() => cache.get(bookId) || EMPTY)
+  const [loading, setLoading] = useState(() => !cache.has(bookId))
   const [error, setError] = useState(null)
   const dataRef = useRef(data)
   dataRef.current = data
 
+  useEffect(() => { if (data.book && data.book.id === bookId) cache.set(bookId, data) }, [data, bookId])
+
   const load = useCallback(async () => {
-    setLoading(true)
+    const cached = cache.get(bookId)
+    if (cached) { setData(cached); setLoading(false) } else { setData(EMPTY); setLoading(true) }
     setError(null)
     try {
       await flush()
@@ -83,7 +91,8 @@ export function useBook(bookId) {
         ideas: overlay(ideas, 'Idea'),
       })
     } catch (e) {
-      setError(e)
+      // With a copy on screen, a failed quiet refresh is not an error page.
+      if (!cache.has(bookId)) setError(e)
     }
     setLoading(false)
   }, [bookId])

@@ -5,7 +5,7 @@ import { X, List, Pin } from 'lucide-react'
 import { useBook, chapterLabel } from '@/hooks/useBook'
 import { useSettings } from '@/lib/settings'
 import { TextSizeControl } from '@/components/WorkspaceBits'
-import { Menu, MenuItem } from '@/components/ui'
+import { Menu, MenuItem, Select } from '@/components/ui'
 import { FONTS } from '@/lib/fonts'
 import { cn } from '@/lib/utils'
 import { toast } from '@/lib/toast'
@@ -130,12 +130,10 @@ export default function Reading() {
           {chapters.map((c) => <MenuItem key={c.id} onSelect={() => { const el = scrollRef.current.querySelector(`[data-chapter="${c.id}"]`); scrollRef.current.scrollTo({ top: el.offsetTop - 40 }) }}>{chapterLabel(c)}</MenuItem>)}
         </Menu>
         <div className="flex-1 text-center text-sm opacity-70 truncate">{cur ? chapterLabel(cur) : ''}</div>
-        <select className="h-9 rounded-lg border border-black/10 bg-transparent px-2 text-sm" value={theme} onChange={(e) => update({ reading_theme: e.target.value })} aria-label="ערכת צבע">
-          <option value="light">בהיר</option><option value="paper">נייר</option><option value="dark">כהה</option>
-        </select>
-        <select className="hidden sm:block h-9 rounded-lg border border-black/10 bg-transparent px-2 text-sm max-w-[9rem]" value={settings.write_font} onChange={(e) => update({ write_font: e.target.value })} aria-label="גופן">
-          {FONTS.filter((f) => f.write).map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
-        </select>
+        <Select size="sm" value={theme} onChange={(v) => update({ reading_theme: v })} aria-label="ערכת צבע" className="border-black/10 bg-transparent text-inherit" align="end"
+          options={[{ value: 'light', label: 'בהיר' }, { value: 'paper', label: 'נייר' }, { value: 'dark', label: 'כהה' }]} />
+        <Select size="sm" value={settings.write_font} onChange={(v) => update({ write_font: v })} aria-label="גופן" className="hidden sm:inline-flex border-black/10 bg-transparent text-inherit max-w-[10rem]" align="end"
+          options={FONTS.filter((f) => f.write).map((f) => ({ value: f.id, label: f.name, style: { fontFamily: f.css } }))} />
         <TextSizeControl value={settings.read_size} onChange={(v) => update({ read_size: v })} min={14} max={34} />
       </div>
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-5" onScroll={onScroll} onMouseUp={onMouseUp} onTouchEnd={() => setTimeout(onMouseUp, 50)} onDoubleClick={openInEditor}>

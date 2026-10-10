@@ -6,7 +6,7 @@ import { usePlanToday } from '@/hooks/usePlanToday'
 import { useSettings } from '@/lib/settings'
 import { WEEKDAYS, DEFAULT_WEEKLY, DEFAULT_WPH, chapterDueDates, dateKey, parseKey } from '@/lib/planning'
 import { Page, Panel, Loading } from '@/components/AppShell'
-import { Button, inputClass } from '@/components/ui'
+import { Button, inputClass, Select } from '@/components/ui'
 import { formatNumber } from '@/lib/text'
 import { cn } from '@/lib/utils'
 
@@ -46,9 +46,8 @@ export default function Plan() {
             {WEEKDAYS.map((d, i) => (
               <label key={d} className="flex flex-col gap-1">
                 <span className="text-muted">{d}</span>
-                <select className="h-10 rounded-lg border border-line bg-bg text-sm px-0.5" value={weekly[i]} onChange={(e) => { const w = [...weekly]; w[i] = +e.target.value; set({ weekly_minutes: w }) }} aria-label={`דקות ביום ${d}`}>
-                  {[0, 15, 30, 45, 60, 90, 120, 180, 240].map((m) => <option key={m} value={m}>{m === 0 ? 'חופש' : m < 60 ? `${m}ד׳` : `${m / 60}ש׳`}</option>)}
-                </select>
+                <Select size="sm" value={weekly[i]} onChange={(v) => { const w = [...weekly]; w[i] = +v; set({ weekly_minutes: w }) }} aria-label={`דקות ביום ${d}`} className="w-full px-1.5"
+                  options={[0, 15, 30, 45, 60, 90, 120, 180, 240].map((m) => ({ value: m, label: m === 0 ? 'חופש' : m < 60 ? `${m}ד׳` : `${m / 60}ש׳` }))} />
               </label>
             ))}
           </div>
@@ -67,10 +66,8 @@ export default function Plan() {
           </div>
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="text-muted">קצב</span>
-            <select className={inputClass} value={plan.pace || 'steady'} onChange={(e) => set({ pace: e.target.value })}>
-              <option value="steady">קבוע: לפי הזמן שיש בכל יום</option>
-              <option value="ramp">עולה בהדרגה: מתחילים בקטן ובונים הרגל</option>
-            </select>
+            <Select value={plan.pace || 'steady'} onChange={(v) => set({ pace: v })} aria-label="קצב" className="w-full"
+              options={[{ value: 'steady', label: 'קבוע: לפי הזמן שיש בכל יום' }, { value: 'ramp', label: 'עולה בהדרגה: מתחילים בקטן ובונים הרגל' }]} />
           </label>
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="text-muted">כמה מילים אתה כותב בשעה</span>

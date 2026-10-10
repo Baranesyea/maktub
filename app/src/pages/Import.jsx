@@ -4,7 +4,7 @@ import { FileUp, ClipboardPaste, Scissors, EyeOff, Eye, Undo2, CheckCircle2, Ale
 import { db } from '@/api/db'
 import { detect, buildStructure, blocksToHtml, structureStats, textToBlocks, DEFAULT_RULES, suggestRules } from '@/lib/importer'
 import { wordsInHtml, formatNumber } from '@/lib/text'
-import { Button, inputClass } from '@/components/ui'
+import { Button, inputClass, Select } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import { toast } from '@/lib/toast'
 
@@ -306,9 +306,8 @@ export default function ImportPage() {
                     {bd && (
                       <div className="flex flex-wrap items-center gap-2 mt-3 mb-1 rounded-lg bg-surface border border-line p-2 text-sm" data-testid="boundary">
                         <span className={cn('text-xs rounded px-1.5 py-0.5', TYPE_COLOR[bd.type])}>{TYPE_LABEL[bd.type]}</span>
-                        <select className="h-8 rounded-md border border-line bg-bg px-1" value={bd.type} onChange={(e) => setB(i, e.target.value ? { ...bd, type: e.target.value } : null)} aria-label="סוג">
-                          <option value="part">חלק</option><option value="chapter">פרק</option><option value="scene">סצנה</option><option value="">בטל פיצול (מזג עם הקודם)</option>
-                        </select>
+                        <Select size="sm" value={bd.type} onChange={(v) => setB(i, v ? { ...bd, type: v } : null)} aria-label="סוג" className="h-8"
+                          options={[{ value: 'part', label: 'חלק' }, { value: 'chapter', label: 'פרק' }, { value: 'scene', label: 'סצנה' }, { value: '', label: 'בטל פיצול (מזג עם הקודם)' }]} />
                         <input className="h-8 flex-1 min-w-[8rem] rounded-md border border-line bg-bg px-2" value={bd.title} onChange={(e) => setB(i, { ...bd, title: e.target.value })} placeholder="שם (לא חובה)" aria-label="שם" />
                         <span className={cn('text-xs', bd.confidence === 'low' ? 'text-warn' : 'text-muted')}>{bd.reason}</span>
                       </div>
