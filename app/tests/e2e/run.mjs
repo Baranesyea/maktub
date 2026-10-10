@@ -827,6 +827,16 @@ await test('no browser dropdowns: every choice uses the app menu', async (page) 
   assert((await page.getAttribute('[data-testid="write-font"]', 'data-value')) === 'optimum', 'font chosen from the menu')
 })
 
+await test('a brand-new writer: settings are created on the server and kept', async (page) => {
+  await page.goto(BASE + '/')
+  await page.evaluate(() => { localStorage.removeItem('maktub_mock_UserSettings'); localStorage.removeItem('maktub_settings_cache') })
+  await page.goto(BASE + '/settings'); await sleep(1200)
+  await page.click('[data-testid="theme-gray"]'); await sleep(1200)
+  const rows = await store(page, 'UserSettings')
+  assert(rows.length === 1, 'one settings record created, got ' + rows.length)
+  assert(rows[0].theme === 'gray', 'theme kept on the server, got ' + rows[0].theme)
+})
+
 await test('refresh: one loading look from sign-in check to the open book', async (page) => {
   await openBook(page)
   await page.evaluate(() => localStorage.setItem('maktub_mock_latency', '600'))

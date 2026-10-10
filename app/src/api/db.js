@@ -93,10 +93,31 @@ function offlineError() {
   return e
 }
 
+// The local test server checks field types against the same entity files the real server uses,
+// so a value of the wrong type fails in tests the way it fails in production.
+const SCHEMAS = isMock
+  ? Object.fromEntries(Object.entries(import.meta.glob('/base44/entities/*.jsonc', { eager: true, query: '?raw', import: 'default' }))
+    .map(([, raw]) => { const j = JSON.parse(raw); return [j.name, j.properties || {}] }))
+  : {}
+function wrongType(name, data) {
+  const props = SCHEMAS[name] || {}
+  for (const [k, v] of Object.entries(data || {})) {
+    const t = props[k]?.type
+    if (!t || v === null || v === undefined) continue
+    const ok = t === 'object' ? typeof v === 'object' && !Array.isArray(v)
+      : t === 'array' ? Array.isArray(v)
+      : t === 'number' ? typeof v === 'number'
+      : t === 'boolean' ? typeof v === 'boolean'
+      : t === 'string' ? typeof v === 'string' : true
+    if (!ok) { const e = new Error(`Error in field ${k}: expected ${t}`); e.status = 422; return e }
+  }
+  return null
+}
+
 function mockEntity(name) {
   const store = mockStore(name)
   const un = (r) => unpackLong(name, r)
-  const pack = (d) => { const p = packLong(name, sanitize(d)); const e = tooLong(p); if (e) throw e; return p }
+  const pack = (d) => { const p = packLong(name, sanitize(d)); const e = tooLong(p) || wrongType(name, p); if (e) throw e; return p }
   return {
     filter: async (q, s, l) => (await store.filter(q, s, l)).map(un),
     list: async (s, l) => (await store.list(s, l)).map(un),
@@ -153,7 +174,7 @@ async function realEntities() {
 }
 
 // Base44 validates field types, so an empty value is sent as the type's empty value instead of null.
-const OBJECT_FIELDS = new Set(['plan', 'story_time', 'note_to_self', 'last_position', 'drive', 'board'])
+const OBJECT_FIELDS = new Set(['plan', 'story_time', 'note_to_self', 'last_position', 'drive', 'board', 'backup_email'])
 const NUMBER_FIELDS = new Set(['words_per_hour', 'word_count', 'order', 'words', 'seconds', 'write_size', 'read_size', 'ipad_size'])
 export function sanitize(data) {
   if (!data || typeof data !== 'object') return data
