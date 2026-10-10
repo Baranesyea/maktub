@@ -4,7 +4,8 @@
 // on the weekday they chose, at most once a day.
 import { createClientFromRequest } from 'npm:@base44/sdk'
 
-const MAX_CHARS = 150_000
+// Used only if the mail service refuses one big email.
+const MAX_CHARS = 400_000
 const DAY_NAMES = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת']
 
 const ENTITY_MAP: Record<string, string> = { '&nbsp;': ' ', '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&#39;': "'" }
@@ -85,20 +86,20 @@ async function sendTo(base44: any, entities: any, email: string) {
   const text = await bookText(entities, email)
   if (!text.trim()) return 0
   const date = new Date().toLocaleDateString('he-IL', { timeZone: 'Asia/Jerusalem', day: 'numeric', month: 'long', year: 'numeric' })
-  const chunks = split(text)
-  for (let i = 0; i < chunks.length; i++) {
-    const part = chunks.length > 1 ? ` (חלק ${i + 1} מתוך ${chunks.length})` : ''
-    const intro = i === 0
-      ? `שלום,\nזה הגיבוי של הספרים שלך ממכתוב, נכון ל־${date}.\nאפשר לשמור את המייל הזה כמו שהוא: יש בו את כל הטקסט, מסודר לפי פרקים.\n\n`
-      : ''
-    await base44.asServiceRole.integrations.Core.SendEmail({
-      to: email,
-      subject: `גיבוי מכתוב · ${date}${part}`,
-      body: intro + chunks[i],
-      from_name: 'מכתוב',
-    })
+  const intro = `שלום,\nזה הגיבוי של הספרים שלך ממכתוב, נכון ל־${date}.\nכל הטקסט נמצא במייל הזה, מסודר לפי פרקים. אם תוכנת המייל מקצרת אותו, לוחצים על ״הצגת ההודעה המלאה״ בתחתית.\n\n`
+  const send = (subject: string, body: string) => base44.asServiceRole.integrations.Core.SendEmail({ to: email, subject, body, from_name: 'מכתוב' })
+  // One email with everything. Only if the mail service refuses it as too large, send it in parts.
+  try {
+    await send(`גיבוי מכתוב · ${date}`, intro + text)
+    return 1
+  } catch (e) {
+    if (!/size|large|limit|too long|413/i.test(String((e as Error)?.message || e))) throw e
+    const chunks = split(text)
+    for (let i = 0; i < chunks.length; i++) {
+      await send(`גיבוי מכתוב · ${date} (חלק ${i + 1} מתוך ${chunks.length})`, (i === 0 ? intro : '') + chunks[i])
+    }
+    return chunks.length
   }
-  return chunks.length
 }
 
 export default async function (req: Request): Promise<Response> {

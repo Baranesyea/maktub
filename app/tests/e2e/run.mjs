@@ -719,6 +719,30 @@ await test('while writing: a copy on the device and a version every few minutes'
   await page.evaluate(() => localStorage.removeItem('maktub_rolling_ms'))
 })
 
+await test('home: with a book the main action is to continue it; with none, to start one', async (page) => {
+  await page.goto(BASE + '/')
+  await page.waitForSelector('[data-testid="continue-writing"]')
+  const cont = await page.locator('[data-testid="continue-writing"]').boundingBox()
+  const nb = await page.locator('[data-testid="new-book"]').boundingBox()
+  assert(cont.y < nb.y, 'continue writing comes first')
+  assert(!(await page.locator('header [data-testid="new-book"]').count()), 'no new-book button in the page header')
+  assert((await page.locator('[data-testid="today-card"]').innerText()).includes('הארגזים הגיעו'), 'shows the last words you wrote')
+  await page.click('[data-testid="continue-writing"]')
+  await page.waitForSelector('[data-testid="workspace"]')
+  await page.evaluate(() => { for (const k of ['Book', 'Chapter', 'Scene']) localStorage.setItem('maktub_mock_' + k, '[]') })
+  await page.goto(BASE + '/')
+  await page.waitForSelector('header [data-testid="new-book"]')
+  assert((await page.textContent('header h1')).includes('ברוכים הבאים'), 'welcome title for a first book')
+})
+
+await test('phone: dark bottom bar with the main places', { viewport: { width: 390, height: 844 }, touch: true, mobile: true }, async (page) => {
+  await openBook(page)
+  await page.goto(BASE + '/')
+  for (const id of ['mnav-home', 'mnav-write', 'mnav-backup', 'mnav-settings']) assert(await page.locator(`[data-testid="${id}"]`).isVisible(), id)
+  await page.click('[data-testid="mnav-backup"]'); await page.waitForSelector('[data-testid="backup"]')
+  await page.screenshot({ path: `${OUT}/phone-backup.png` })
+})
+
 // ---------------------------------------------------------------- iPad and phone
 await test('iPad landscape: touch layout, tree and editor side by side', { viewport: { width: 1180, height: 820 }, touch: true, mobile: true }, async (page) => {
   await openBook(page)

@@ -454,7 +454,7 @@ export default function Workspace() {
           )}
           {view === 'write' && !focusMode && (
             <div className="chrome h-12 shrink-0 border-t border-line flex items-center justify-center bg-raised overflow-x-auto">
-              <FormatBar editor={activeEditor} onAddNote={addNote} onSplit={splitHere} />
+              <FormatBar editor={activeEditor} onAddNote={addNote} onSplit={splitHere} compact={layout === 'narrow'} />
             </div>
           )}
         </main>

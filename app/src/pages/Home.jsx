@@ -46,34 +46,41 @@ export default function Home() {
   const focusBookId = settings.last_book_id && activeBooks.some((b) => b.id === settings.last_book_id) ? settings.last_book_id : activeBooks[0]?.id
 
   const dateLine = new Date().toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long' })
+  const hasBook = activeBooks.length > 0
+  const hour = new Date().getHours()
+  const greeting = hour < 5 ? 'לילה טוב' : hour < 12 ? 'בוקר טוב' : hour < 17 ? 'צהריים טובים' : hour < 21 ? 'ערב טוב' : 'לילה טוב'
   return (
     <Page
       eyebrow={dateLine}
-      title="שולחן העבודה"
+      title={books === null || hasBook ? greeting : 'ברוכים הבאים למכתוב'}
       testid="home"
-      actions={<>
+      actions={books && !hasBook && <>
         <Button onClick={() => navigate('/import')}><Upload size={16} />ייבוא ספר קיים</Button>
         <Button variant="primary" onClick={() => setNewOpen(true)} data-testid="new-book"><Plus size={16} />ספר חדש</Button>
       </>}
     >
-      {!isConnected() && !settings.backup_email?.enabled && (
+      {focusBookId && <TodayCard bookId={focusBookId} />}
+
+      {hasBook && !isConnected() && !settings.backup_email?.enabled && (
         <div className="rounded-xl border border-line bg-raised px-4 py-3 flex flex-wrap items-center gap-3" data-testid="drive-reminder">
           <span className="w-9 h-9 rounded-lg bg-surface border border-line flex items-center justify-center shrink-0"><ShieldCheck size={18} /></span>
-          <div className="flex-1 min-w-[220px]">
-            <div className="font-black text-[15px]">הספרים שלך עוד לא מגובים בגוגל דרייב</div>
-            <div className="text-[13px] text-muted">מומלץ: עותק מסודר של כל פרק בדרייב שלך, שמתעדכן לבד.</div>
+          <div className="flex-1 min-w-[200px]">
+            <div className="font-black text-[15px]">כדאי שיהיה לך עותק גם מחוץ למכתוב</div>
+            <div className="text-[13px] text-muted">הכתיבה נשמרת כל הזמן. מומלץ להדליק גם גיבוי שבועי למייל שלך.</div>
           </div>
-          <Button size="sm" onClick={() => navigate('/settings#drive')}>חיבור לגוגל דרייב</Button>
+          <Button size="sm" onClick={() => navigate('/backup')}>להגדרות הגיבוי</Button>
         </div>
       )}
-
-      {focusBookId && <TodayCard bookId={focusBookId} />}
 
       <Panel
         title="הספרים שלי"
         description={books ? `${activeBooks.length} ${activeBooks.length === 1 ? 'ספר' : 'ספרים'}` : null}
         bodyClass="p-0"
-        actions={archived.length > 0 && <button className="text-[13px] text-muted hover:text-fg" onClick={() => setShowArchived((x) => !x)}>{showArchived ? 'הסתר ארכיון' : `ארכיון (${archived.length})`}</button>}
+        actions={<div className="flex items-center gap-1">
+          {archived.length > 0 && <button className="text-[13px] text-muted hover:text-fg px-2" onClick={() => setShowArchived((x) => !x)}>{showArchived ? 'הסתר ארכיון' : `ארכיון (${archived.length})`}</button>}
+          {hasBook && <Button size="sm" variant="ghost" onClick={() => navigate('/import')}><Upload size={15} />ייבוא</Button>}
+          {hasBook && <Button size="sm" variant="ghost" onClick={() => setNewOpen(true)} data-testid="new-book"><Plus size={15} />ספר חדש</Button>}
+        </div>}
       >
         {books === null && <p className="text-muted p-5">טוען…</p>}
         {books && activeBooks.length === 0 && (
@@ -171,59 +178,78 @@ function TodayCard({ bookId }) {
 
   const totalWords = bk.flatChapters.reduce((n, c) => n + (c.unused ? 0 : c.words || 0), 0)
   const minutes = Math.round((today.seconds || 0) / 60)
+  // Where you stopped, and the last words you wrote there.
+  const stopChapter = bk.flatChapters.find((c) => c.id === lastPos?.chapter_id) || bk.flatChapters[0]
+  const stopScene = stopChapter && (stopChapter.scenes.find((s) => s.id === lastPos?.scene_id) || [...stopChapter.scenes].reverse().find((s) => s.content) || stopChapter.scenes[0])
+  const stopText = htmlToText(stopScene?.content || '').replace(/\s+/g, ' ').trim()
+  const tail = stopText.length > 170 ? '…' + stopText.slice(-170).replace(/^\S*\s/, '') : stopText
+  const continueUrl = lastPos ? `/book/${bookId}?ch=${lastPos.chapter_id || ''}${lastPos.scene_id ? `&sc=${lastPos.scene_id}` : ''}` : `/book/${bookId}`
+  const showNext = nextScene && nextScene.s.id !== stopScene?.id
   return (
     <div className="flex flex-col gap-4" data-tour="today" data-testid="today-card">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Stat label="מילים היום" value={formatNumber(today.words)}
-          hint={dayOff ? 'יום חופש. אין יעד היום.' : plan.todayTarget ? `מתוך ${formatNumber(plan.todayTarget)}` : 'אין יעד יומי'}>
-          {pct != null && !dayOff && (
-            <div className="h-1.5 rounded-full bg-sunk overflow-hidden mt-2" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
-              <div className={cn('h-full rounded-full', pct >= 100 ? 'bg-ok' : 'bg-accent')} style={{ width: `${pct}%` }} />
-            </div>
-          )}
-        </Stat>
-        <Stat label="ימים ברצף" icon={Flame} tone="text-warn" value={streak} hint="ימי חופש לא שוברים את הרצף" />
-        <Stat label="זמן כתיבה היום" value={minutes < 60 ? `${minutes} דק׳` : `${Math.floor(minutes / 60)}:${String(minutes % 60).padStart(2, '0')}`} hint="רק זמן שבו באמת הקלדת" />
-        <Stat label="מילים בספר" value={formatNumber(totalWords)} hint={`${bk.flatChapters.filter((c) => !c.unused).length} פרקים`} />
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-[1.5fr_1fr]">
-        <Panel title="ממשיכים לכתוב" description={bk.book.title}>
-          <div className="flex flex-col gap-4">
-            {fromBefore && (
-              <div className="rounded-lg border border-line bg-raised p-3" data-testid="note-from-yesterday">
-                <div className="text-[12px] text-muted mb-1">הערה לעצמך מ{nts.date === dateKey(new Date(Date.now() - 864e5)) ? 'אתמול' : 'הפעם הקודמת'}</div>
-                <div className="text-[16px]">{nts.text}</div>
+      <section className="rounded-2xl bg-fg text-bg p-6 sm:p-8 flex flex-col gap-5 shadow-[var(--shadow)]" aria-label="ממשיכים לכתוב">
+        <div className="flex flex-wrap items-end gap-x-6 gap-y-2">
+          <div className="flex-1 min-w-[200px]">
+            <div className="text-[13px] opacity-60">הספר שלך</div>
+            <div className="text-[28px] sm:text-[34px] leading-tight font-black">{bk.book.title}</div>
+          </div>
+          <div className="text-[13px] opacity-70 tabular-nums">
+            {dayOff ? 'היום יום חופש' : plan.todayTarget ? `היום ${formatNumber(today.words)} מתוך ${formatNumber(plan.todayTarget)} מילים` : `היום ${formatNumber(today.words)} מילים`}
+            {pct != null && !dayOff && (
+              <div className="h-1 w-40 rounded-full bg-bg/20 overflow-hidden mt-1.5" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
+                <div className="h-full rounded-full bg-bg" style={{ width: `${pct}%` }} />
               </div>
             )}
-            {plan.hasPlan && plan.unrealistic && <div className="text-sm text-warn">היעד היום גבוה מהזמן שהגדרת. <Link className="underline" to={`/book/${bookId}/plan`}>לעדכן את התוכנית</Link></div>}
-            <div className="flex flex-wrap gap-2">
-              <Button variant="primary" size="lg" onClick={() => navigate(lastPos ? `/book/${bookId}?ch=${lastPos.chapter_id || ''}${lastPos.scene_id ? `&sc=${lastPos.scene_id}` : ''}` : `/book/${bookId}`)} data-testid="continue-writing">
-                המשך מאיפה שעצרת <ArrowLeft size={18} />
-              </Button>
-              {nextScene && (
-                <Button size="lg" onClick={() => navigate(`/book/${bookId}?ch=${nextScene.c.id}&sc=${nextScene.s.id}`)}>
-                  הסצנה הבאה: {nextScene.s.title || htmlToText(nextScene.s.summary || '').slice(0, 24) || chapterLabel(nextScene.c)}
-                </Button>
-              )}
-            </div>
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-muted">הערה לעצמך למחר</span>
-              <textarea
-                className={cn(inputClass, 'h-auto py-2 leading-6')}
-                rows={2}
-                value={draft}
-                onChange={(e) => { setDraft(e.target.value); update({ note_to_self: { text: e.target.value, date: todayKey(), book_id: bookId } }) }}
-                placeholder="למשל: מחר מתחילים מהשיחה במטבח"
-                style={{ fontSize: 16 }}
-                data-testid="note-to-self"
-              />
-            </label>
-            {!plan.hasPlan && <Link to={`/book/${bookId}/plan`} className="text-[13px] underline underline-offset-4 decoration-line-strong hover:decoration-fg self-start">קבעו תאריך סיום וזמני כתיבה, ומכתוב יחשב יעד יומי</Link>}
           </div>
+        </div>
+        {stopChapter && (
+          <div className="border-s-2 border-bg/30 ps-4">
+            <div className="text-[13px] opacity-60 mb-1">עצרת ב{chapterLabel(stopChapter)}{stopScene?.title && stopChapter.scenes.length > 1 ? ` · ${stopScene.title}` : ''}</div>
+            {tail ? <p className="m-0 text-[17px] leading-8 font-write opacity-90" style={{ fontWeight: 'var(--write-weight, 300)' }}>{tail}</p> : <p className="m-0 text-[15px] opacity-70">הדף עוד ריק. זה הזמן למשפט הראשון.</p>}
+          </div>
+        )}
+        {fromBefore && (
+          <div className="rounded-lg bg-bg/10 px-4 py-3" data-testid="note-from-yesterday">
+            <div className="text-[12px] opacity-60 mb-0.5">הערה לעצמך מ{nts.date === dateKey(new Date(Date.now() - 864e5)) ? 'אתמול' : 'הפעם הקודמת'}</div>
+            <div className="text-[16px]">{nts.text}</div>
+          </div>
+        )}
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+          <button onClick={() => navigate(continueUrl)} data-testid="continue-writing"
+            className="h-14 px-7 rounded-xl bg-bg text-fg text-[18px] font-black inline-flex items-center gap-2 hover:opacity-90 transition-opacity">
+            המשך לכתוב <ArrowLeft size={20} />
+          </button>
+          {showNext && (
+            <button className="text-[14px] opacity-75 hover:opacity-100 underline underline-offset-4 decoration-bg/40" onClick={() => navigate(`/book/${bookId}?ch=${nextScene.c.id}&sc=${nextScene.s.id}`)}>
+              או לסצנה הבאה: {nextScene.s.title || htmlToText(nextScene.s.summary || '').slice(0, 24) || chapterLabel(nextScene.c)}
+            </button>
+          )}
+        </div>
+        {plan.hasPlan && plan.unrealistic && <div className="text-[13px] opacity-80">היעד היום גבוה מהזמן שהגדרת. <Link className="underline" to={`/book/${bookId}/plan`}>לעדכן את התוכנית</Link></div>}
+      </section>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <Stat label="ימים ברצף" icon={Flame} value={streak} hint="ימי חופש לא שוברים את הרצף" />
+        <Stat label="זמן כתיבה היום" value={minutes < 60 ? `${minutes} דק׳` : `${Math.floor(minutes / 60)}:${String(minutes % 60).padStart(2, '0')}`} hint="רק זמן שבו באמת הקלדת" />
+        <Stat label="מילים בספר" value={formatNumber(totalWords)} hint={`${bk.flatChapters.filter((c) => !c.unused).length} פרקים`} />
+        <Stat label="יעד יומי" value={plan.todayTarget ? formatNumber(plan.todayTarget) : '—'} hint={plan.hasPlan ? 'לפי התוכנית שלך' : <Link to={`/book/${bookId}/plan`} className="underline underline-offset-4">לקבוע תאריך סיום</Link>} />
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
+        <Panel title="הערה לעצמך למחר" description="תופיע כאן כשתחזור.">
+          <textarea
+            className={cn(inputClass, 'w-full h-auto py-2 leading-6')}
+            rows={3}
+            value={draft}
+            onChange={(e) => { setDraft(e.target.value); update({ note_to_self: { text: e.target.value, date: todayKey(), book_id: bookId } }) }}
+            placeholder="למשל: מחר מתחילים מהשיחה במטבח"
+            style={{ fontSize: 16 }}
+            aria-label="הערה לעצמך למחר"
+            data-testid="note-to-self"
+          />
         </Panel>
         <Panel title="30 הימים האחרונים" description="מילים שהקלדת בכל יום">
-          <div className="flex items-end gap-[3px] h-36" aria-label="מילים ב־30 הימים האחרונים">
+          <div className="flex items-end gap-[3px] h-24" aria-label="מילים ב־30 הימים האחרונים">
             {last30.map((d) => (
               <div key={d.k} className={cn('flex-1 rounded-t-[2px]', d.k === todayKey() ? 'bg-accent' : d.w ? 'bg-accent/35' : 'bg-sunk')} style={{ height: `${Math.max(3, (d.w / maxW) * 100)}%` }} title={`${d.k}: ${d.w} מילים`} />
             ))}

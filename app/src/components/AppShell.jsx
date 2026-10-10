@@ -94,22 +94,32 @@ export function Rail() {
   )
 }
 
-/** Phone navigation: a bar at the bottom of the screen on pages outside the editor. */
+/** Phone navigation: a dark bar at the bottom, the same family as the desktop rail. */
 export function MobileNav() {
   const { settings } = useSettings()
   const m = useMatch('/book/:bookId/*')
   const bookId = m?.params.bookId || settings.last_book_id || null
-  const item = (to, Icon, label, end) => (
-    <NavLink key={label} to={to} end={end} className={({ isActive }) => cn('flex-1 flex flex-col items-center justify-center gap-0.5 text-[11px]', isActive ? 'text-fg' : 'text-muted')}>
-      <Icon size={20} strokeWidth={1.8} />{label}
+  const item = (to, Icon, label, end, testid) => (
+    <NavLink key={label} to={to} end={end} data-testid={testid}
+      className={({ isActive }) => cn('relative flex-1 flex flex-col items-center justify-center gap-1 text-[11px] leading-none', isActive ? 'text-white' : 'text-[var(--rail-fg)]')}>
+      {({ isActive }) => (
+        <>
+          {isActive && <span className="absolute top-0 inset-x-5 h-[3px] rounded-b-full bg-white" aria-hidden />}
+          <Icon size={21} strokeWidth={1.9} />
+          <span>{label}</span>
+        </>
+      )}
     </NavLink>
   )
   return (
-    <nav className="sm:hidden fixed bottom-0 inset-x-0 h-16 pb-[env(safe-area-inset-bottom)] flex bg-surface border-t border-line z-30" aria-label="ניווט">
-      {item('/', HomeIcon, 'בית', true)}
-      {bookId && item(`/book/${bookId}`, PenLine, 'כתיבה', true)}
-      {bookId && item(`/book/${bookId}/plan`, CalendarClock, 'תכנון')}
-      {item('/settings', Settings, 'הגדרות')}
+    <nav className="sm:hidden fixed bottom-0 inset-x-0 z-30 bg-[var(--rail-bg)] pb-[env(safe-area-inset-bottom)]" aria-label="ניווט">
+      <div className="h-16 flex">
+        {item('/', HomeIcon, 'בית', true, 'mnav-home')}
+        {bookId && item(`/book/${bookId}`, PenLine, 'כתיבה', true, 'mnav-write')}
+        {bookId && item(`/book/${bookId}/plan`, CalendarClock, 'תכנון', false, 'mnav-plan')}
+        {item('/backup', ShieldCheck, 'גיבוי', false, 'mnav-backup')}
+        {item('/settings', Settings, 'הגדרות', false, 'mnav-settings')}
+      </div>
     </nav>
   )
 }
@@ -170,10 +180,10 @@ export function Panel({ title, description, actions, children, className, bodyCl
 /** A number tile for the top of a dashboard. */
 export function Stat({ label, value, hint, icon: Icon, tone, children, ...rest }) {
   return (
-    <div className="rounded-xl border border-line bg-surface shadow-[var(--shadow-sm)] px-5 py-4 flex flex-col gap-1 min-w-0" {...rest}>
+    <div className="rounded-xl border border-line bg-surface shadow-[var(--shadow-sm)] px-4 py-3 sm:px-5 sm:py-4 flex flex-col gap-1 min-w-0" {...rest}>
       <div className="flex items-center gap-1.5 text-[13px] text-muted">{Icon && <Icon size={15} className={tone} />}{label}</div>
-      <div className="text-[30px] leading-none font-black tabular-nums mt-1">{value}</div>
-      {hint && <div className="text-[13px] text-muted mt-1">{hint}</div>}
+      <div className="text-[24px] sm:text-[30px] leading-none font-black tabular-nums mt-1">{value}</div>
+      {hint && <div className="text-[12px] sm:text-[13px] text-muted mt-1 hidden sm:block">{hint}</div>}
       {children}
     </div>
   )

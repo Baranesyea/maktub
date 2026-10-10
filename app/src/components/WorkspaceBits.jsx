@@ -37,7 +37,7 @@ export function TextSizeControl({ value, onChange, min = 13, max = 32, label = '
   )
 }
 
-export function FormatBar({ editor, onAddNote, onSplit, className }) {
+export function FormatBar({ editor, onAddNote, onSplit, className, compact }) {
   const [, force] = useState(0)
   useEffect(() => {
     if (!editor) return
@@ -55,13 +55,13 @@ export function FormatBar({ editor, onAddNote, onSplit, className }) {
       <IconButton label="מודגש" active={on('bold')} onClick={run((c) => c.toggleBold())} disabled={!editor}><Bold size={16} /></IconButton>
       <IconButton label="נטוי" active={on('italic')} onClick={run((c) => c.toggleItalic())} disabled={!editor}><Italic size={16} /></IconButton>
       <IconButton label="הדגשת רקע (מרקר)" active={on('highlight')} onClick={run((c) => c.toggleHighlight())} disabled={!editor}><Highlighter size={16} /></IconButton>
-      <Sep />
-      <IconButton label="כותרת" active={on('heading', { level: 2 })} onClick={run((c) => c.toggleHeading({ level: 2 }))} disabled={!editor}><Heading2 size={16} /></IconButton>
-      <IconButton label="ציטוט" active={on('blockquote')} onClick={run((c) => c.toggleBlockquote())} disabled={!editor}><Quote size={16} /></IconButton>
-      <IconButton label="מפריד סצנה" onClick={run((c) => c.setHorizontalRule())} disabled={!editor}><Rule size={16} /></IconButton>
+      {!compact && <Sep />}
+      {!compact && <IconButton label="כותרת" active={on('heading', { level: 2 })} onClick={run((c) => c.toggleHeading({ level: 2 }))} disabled={!editor}><Heading2 size={16} /></IconButton>}
+      {!compact && <IconButton label="ציטוט" active={on('blockquote')} onClick={run((c) => c.toggleBlockquote())} disabled={!editor}><Quote size={16} /></IconButton>}
+      {!compact && <IconButton label="מפריד סצנה" onClick={run((c) => c.setHorizontalRule())} disabled={!editor}><Rule size={16} /></IconButton>}
       <Sep />
       <IconButton label="הדבק פתק (Ctrl+Shift+M)" onClick={onAddNote} disabled={!editor} data-testid="add-note" data-tour="addnote"><Pin size={16} /></IconButton>
-      <IconButton label="פצל כאן לשתי סצנות" onClick={onSplit} disabled={!editor}><Scissors size={16} /></IconButton>
+      {!compact && <IconButton label="פצל כאן לשתי סצנות" onClick={onSplit} disabled={!editor}><Scissors size={16} /></IconButton>}
     </div>
   )
 }
