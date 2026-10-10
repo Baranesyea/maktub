@@ -73,6 +73,7 @@ async function test(name, opts, fn) {
 }
 
 const waitSaved = (page) => waitFor(async () => (await page.getAttribute('[data-testid="save-status"]', 'data-state')) === 'saved', 'saved', 8000)
+const waitSent = (page) => waitFor(async () => (await page.evaluate(() => localStorage.getItem('maktub_outbox_v1') || '{}')) === '{}', 'outbox empty', 8000)
 const openBook = async (page, q = '') => { await page.goto(`${BASE}/book/b1${q}`); await page.waitForSelector('[data-testid="workspace"]'); await sleep(400) }
 const editorOf = (page, sceneId) => page.locator(`.ProseMirror[data-scene-id="${sceneId}"]`)
 
@@ -96,6 +97,42 @@ await test('create a new book and land in the editor', async (page) => {
   await page.waitForSelector('.ProseMirror')
   const books = await store(page, 'Book')
   assert(books.some((b) => b.title === 'ספר חדש לבדיקה'), 'book created')
+})
+
+await test('book compass: set on a new book, edited in planning, shown on home and beside the text', async (page) => {
+  await page.goto(BASE + '/')
+  await page.click('[data-testid="new-book"]')
+  await page.fill('[data-testid="new-book-title"]', 'ספר עם מצפן')
+  await page.fill('[data-testid="new-book-about"]', 'נער שמגלה שאבא שלו היה מרגל')
+  await page.click('[data-testid="create-book"]')
+  await page.waitForSelector('[data-testid="workspace"]')
+  const made = (await store(page, 'Book')).find((b) => b.title === 'ספר עם מצפן')
+  assert(made?.compass?.about === 'נער שמגלה שאבא שלו היה מרגל', 'the sentence is saved with the new book')
+  await page.waitForSelector('[data-testid="compass-line"]')
+  assert((await page.textContent('[data-testid="compass-line"]')).includes('אבא שלו היה מרגל'), 'beside the text')
+
+  await page.goto(BASE + '/book/b1/plan')
+  await page.waitForSelector('[data-testid="compass-panel"]')
+  await page.fill('[data-testid="compass-about"]', 'סיפור על בית שנבנה מחדש')
+  await page.fill('[data-testid="compass-feel"]', 'שאפשר להתחיל מחדש')
+  await page.fill('[data-testid="compass-why"]', 'כי זה הסיפור של המשפחה שלי')
+  await sleep(900); await waitSent(page)
+  const b1 = (await store(page, 'Book')).find((b) => b.id === 'b1')
+  assert(b1.compass?.feel === 'שאפשר להתחיל מחדש' && b1.compass?.why === 'כי זה הסיפור של המשפחה שלי', 'planning page saves the compass')
+
+  await openBook(page)
+  await page.click('[data-testid="compass-line"]')
+  await page.waitForSelector('[data-testid="compass-fields"]')
+  assert(await page.inputValue('[data-testid="compass-about"]') === 'סיפור על בית שנבנה מחדש', 'dialog shows the saved answers')
+  await page.fill('[data-testid="compass-audience"]', 'מבוגרים')
+  await page.click('[data-testid="compass-done"]')
+  await sleep(900); await waitSent(page)
+  assert((await store(page, 'Book')).find((b) => b.id === 'b1').compass?.audience === 'מבוגרים', 'dialog saves too')
+
+  await page.goto(BASE + '/')
+  await page.waitForSelector('[data-testid="compass-home"]')
+  const home = await page.textContent('[data-testid="compass-home"]')
+  assert(home.includes('סיפור על בית שנבנה מחדש') && home.includes('שאפשר להתחיל מחדש'), 'home shows what the book is about and the ending it aims for')
 })
 
 // ---------------------------------------------------------------- Writing and saving
@@ -889,7 +926,6 @@ await test('phone: dark bottom bar with the main places', { viewport: { width: 3
 // ---------------------------------------------------------------- Inspiration and research
 const PICS = ['tests/e2e/fixtures/sea.png', 'tests/e2e/fixtures/face.png']
 // Pages without the save tick: wait until the outbox has sent everything.
-const waitSent = (page) => waitFor(async () => (await page.evaluate(() => localStorage.getItem('maktub_outbox_v1') || '{}')) === '{}', 'outbox empty', 8000)
 const addPictures = async (page) => {
   await page.goto(BASE + '/book/b1/inspiration')
   await page.waitForSelector('[data-testid="gallery-empty"]')

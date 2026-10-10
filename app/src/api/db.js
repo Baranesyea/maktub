@@ -174,7 +174,7 @@ async function realEntities() {
 }
 
 // Base44 validates field types, so an empty value is sent as the type's empty value instead of null.
-const OBJECT_FIELDS = new Set(['plan', 'story_time', 'note_to_self', 'last_position', 'drive', 'board', 'backup_email'])
+const OBJECT_FIELDS = new Set(['plan', 'story_time', 'note_to_self', 'last_position', 'drive', 'board', 'backup_email', 'compass'])
 const NUMBER_FIELDS = new Set(['words_per_hour', 'word_count', 'order', 'words', 'seconds', 'write_size', 'read_size', 'ipad_size'])
 export function sanitize(data) {
   if (!data || typeof data !== 'object') return data

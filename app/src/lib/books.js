@@ -1,7 +1,7 @@
 import { db } from '@/api/db'
 
-export async function createBook(title) {
-  const book = await db.Book.create({ title: title || 'ספר חדש', use_parts: false, archived: false, deleted: false })
+export async function createBook(title, extra = {}) {
+  const book = await db.Book.create({ title: title || 'ספר חדש', use_parts: false, archived: false, deleted: false, ...extra })
   const ch = await db.Chapter.create({ book_id: book.id, title: '', kind: 'chapter', order: 0, deleted: false })
   await db.Scene.create({ book_id: book.id, chapter_id: ch.id, title: '', content: '', word_count: 0, status: 'idea', order: 0, deleted: false })
   return book

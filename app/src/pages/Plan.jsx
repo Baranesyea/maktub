@@ -7,6 +7,7 @@ import { useSettings } from '@/lib/settings'
 import { WEEKDAYS, DEFAULT_WEEKLY, DEFAULT_WPH, chapterDueDates, dateKey, parseKey } from '@/lib/planning'
 import { Page, Panel, Loading } from '@/components/AppShell'
 import { Button, inputClass, Select } from '@/components/ui'
+import { CompassFields } from '@/components/Compass'
 import { formatNumber } from '@/lib/text'
 import { cn } from '@/lib/utils'
 
@@ -28,7 +29,10 @@ export default function Plan() {
 
   const weeklyMinutes = weekly.reduce((a, b) => a + b, 0)
   return (
-    <Page eyebrow={bk.book.title} title="תכנון זמנים" subtitle="תאריך סיום, הזמן שיש לך בכל שבוע, ומכתוב מחשב אם זה אפשרי ומה היעד היומי." testid="plan">
+    <Page eyebrow={bk.book.title} title="תכנון" subtitle="בשביל מה הספר, עד מתי, וכמה זמן יש לך. מכתוב מחשב אם זה אפשרי ומה היעד היומי." testid="plan">
+      <Panel title="המצפן של הספר" description="בשביל מה הספר הזה. מופיע בעמוד הבית ולצד הטקסט, כדי שהכתיבה תדע לאן היא הולכת." bodyClass="p-5" data-testid="compass-panel">
+        <div className="grid gap-x-6 gap-y-4 lg:grid-cols-2 [&>div]:contents"><CompassFields bk={bk} /></div>
+      </Panel>
       <div className="grid gap-6 lg:grid-cols-2 items-start">
       <div className="flex flex-col gap-6">
         <Panel title="המטרה" bodyClass="p-5 flex flex-col gap-4">

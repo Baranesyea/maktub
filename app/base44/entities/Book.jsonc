@@ -25,6 +25,9 @@
     },
     "plan": {
       "type": "object"
+    },
+    "compass": {
+      "type": "object"
     }
   },
   "required": [

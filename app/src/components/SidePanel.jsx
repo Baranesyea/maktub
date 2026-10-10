@@ -3,6 +3,7 @@ import * as Tabs from '@radix-ui/react-tabs'
 import { Plus, Trash2, History, X } from 'lucide-react'
 import NotesPanel from '@/components/NotesPanel'
 import AidsPanel from '@/components/AidsPanel'
+import { CompassLine } from '@/components/Compass'
 import { Button, IconButton, inputClass, Select } from '@/components/ui'
 import { SCENE_STATUS } from '@/lib/text'
 import { formatTime, parseFuzzy, resolveTime, ageAt } from '@/lib/timeline'
@@ -20,6 +21,7 @@ export default function SidePanel({ bk, tab, onTab, scene, chapter, notesProps, 
         </Tabs.List>
         {onClose && <span className="self-center"><IconButton label="סגור חלונית" onClick={onClose}><X size={17} /></IconButton></span>}
       </div>
+      <CompassLine bk={bk} />
       <Tabs.Content value="notes" className="flex-1 min-h-0"><NotesPanel bk={bk} {...notesProps} /></Tabs.Content>
       <Tabs.Content value="scene" className="flex-1 min-h-0 overflow-y-auto"><ScenePanel bk={bk} scene={scene} chapter={chapter} onShowVersions={onShowVersions} /></Tabs.Content>
       <Tabs.Content value="aids" className="flex-1 min-h-0"><AidsPanel bk={bk} scene={scene} chapter={chapter} /></Tabs.Content>

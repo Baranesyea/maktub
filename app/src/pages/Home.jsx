@@ -15,6 +15,7 @@ import { formatNumber, htmlToText } from '@/lib/text'
 import { chapterLabel } from '@/hooks/useBook'
 import { todayKey, cn } from '@/lib/utils'
 import { toast } from '@/lib/toast'
+import { CompassOnHome } from '@/components/Compass'
 
 export default function Home() {
   const { settings, update } = useSettings()
@@ -23,6 +24,7 @@ export default function Home() {
   const [words, setWords] = useState({})
   const [newOpen, setNewOpen] = useState(false)
   const [title, setTitle] = useState('')
+  const [about, setAbout] = useState('')
   const [rename, setRename] = useState(null)
   const [showArchived, setShowArchived] = useState(false)
 
@@ -36,8 +38,8 @@ export default function Home() {
   useEffect(() => { refresh() }, [])
 
   const create = async () => {
-    const b = await createBook(title.trim() || 'ספר חדש')
-    setNewOpen(false); setTitle('')
+    const b = await createBook(title.trim() || 'ספר חדש', about.trim() ? { compass: { about: about.trim() } } : {})
+    setNewOpen(false); setTitle(''); setAbout('')
     navigate(`/book/${b.id}`)
   }
 
@@ -106,6 +108,10 @@ export default function Home() {
       <Dialog open={newOpen} onOpenChange={setNewOpen} title="ספר חדש">
         <form onSubmit={(e) => { e.preventDefault(); create() }} className="flex flex-col gap-3">
           <input className={inputClass} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="שם הספר (אפשר לשנות אחר כך)" autoFocus data-testid="new-book-title" />
+          <label className="flex flex-col gap-1.5 text-sm">
+            <span className="text-muted">במשפט אחד, על מה הספר? (לא חובה)</span>
+            <textarea className={cn(inputClass, 'h-auto py-2 leading-6 resize-none')} rows={2} value={about} onChange={(e) => setAbout(e.target.value)} placeholder="למשל: נער מהפריפריה שמגלה שאבא שלו היה מרגל." style={{ fontSize: 16 }} data-testid="new-book-about" />
+          </label>
           <Button variant="primary" type="submit" data-testid="create-book">צור ספר</Button>
         </form>
       </Dialog>
@@ -202,6 +208,7 @@ function TodayCard({ bookId }) {
             )}
           </div>
         </div>
+        <CompassOnHome bk={bk} />
         {stopChapter && (
           <div className="border-s-2 border-bg/30 ps-4">
             <div className="text-[13px] opacity-60 mb-1">עצרת ב{chapterLabel(stopChapter)}{stopScene?.title && stopChapter.scenes.length > 1 ? ` · ${stopScene.title}` : ''}</div>
