@@ -1,12 +1,13 @@
 // The application frame: a fixed navigation rail on every screen, and the page anatomy
 // (header, panels, stat tiles) that every page is built from.
 import { NavLink, useMatch } from 'react-router-dom'
-import { Home as HomeIcon, Lightbulb, PenLine, CalendarClock, History, BookOpen, Upload, Settings, Cloud, CloudOff, AlertTriangle, Loader2, LogOut } from 'lucide-react'
+import { Home as HomeIcon, Lightbulb, PenLine, CalendarClock, History, BookOpen, Upload, Settings, LogOut, ShieldCheck } from 'lucide-react'
 import { LogoMark } from '@/components/Logo'
 import { Menu, MenuItem, MenuLabel, MenuSeparator } from '@/components/ui'
 import { useSettings } from '@/lib/settings'
 import { useAuth } from '@/lib/AuthContext'
-import { useDriveState } from '@/lib/drive'
+import { subscribeSave } from '@/lib/outbox'
+import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
 
 function RailLink({ to, icon: Icon, label, end, testid, match = true }) {
@@ -31,18 +32,21 @@ function RailLink({ to, icon: Icon, label, end, testid, match = true }) {
   )
 }
 
-const DRIVE_ICON = { off: CloudOff, synced: Cloud, syncing: Loader2, pending: CloudOff, attention: AlertTriangle }
-
-function DriveRailItem({ bookId }) {
-  const state = useDriveState(bookId || '_')
-  const Icon = DRIVE_ICON[state.status] || Cloud
-  const dot = state.status === 'synced' ? 'bg-white' : state.status === 'off' ? 'bg-transparent ring-1 ring-[var(--rail-fg)]' : 'bg-[var(--rail-fg)]'
-  const label = state.status === 'off' ? 'לא מגובה' : state.status === 'attention' ? 'דורש טיפול' : 'גיבוי'
+/** Backup: a shield with a dot. White dot when everything is on the server, grey ring while waiting. */
+function BackupRailItem() {
+  const [save, setSave] = useState({ status: 'saved' })
+  useEffect(() => subscribeSave(setSave), [])
+  const ok = save.status === 'saved'
   return (
-    <NavLink to="/settings#drive" title={state.status === 'off' ? 'הספרים עוד לא מגובים בגוגל דרייב' : 'גיבוי לגוגל דרייב'}
-      className="relative w-[64px] min-h-[54px] flex flex-col items-center justify-center gap-1 rounded-xl text-[11px] leading-none text-[var(--rail-fg)] hover:text-white hover:bg-[var(--rail-hover)]">
-      <span className="relative"><Icon size={19} strokeWidth={1.8} className={state.status === 'syncing' ? 'animate-spin' : ''} /><span className={cn('absolute -top-0.5 -left-1 w-2 h-2 rounded-full ring-2 ring-[var(--rail-bg)]', dot)} /></span>
-      <span>{label}</span>
+    <NavLink to="/backup" title={ok ? 'הכול שמור. לחצו להגדרות הגיבוי.' : 'שומר… לחצו להגדרות הגיבוי.'} data-testid="nav-backup"
+      className={({ isActive }) => cn('relative w-[64px] min-h-[54px] flex flex-col items-center justify-center gap-1 rounded-xl text-[11px] leading-none transition-colors', isActive ? 'bg-[var(--rail-active)] text-white' : 'text-[var(--rail-fg)] hover:text-white hover:bg-[var(--rail-hover)]')}>
+      {({ isActive }) => (
+        <>
+          {isActive && <span className="absolute -right-[6px] top-3 bottom-3 w-[3px] rounded-full bg-white" aria-hidden />}
+          <span className="relative"><ShieldCheck size={19} strokeWidth={1.8} /><span className={cn('absolute -top-0.5 -left-1 w-2 h-2 rounded-full ring-2 ring-[var(--rail-bg)]', ok ? 'bg-white' : 'bg-[var(--rail-fg)] animate-pulse')} /></span>
+          <span>גיבוי</span>
+        </>
+      )}
     </NavLink>
   )
 }
@@ -83,7 +87,7 @@ export function Rail() {
       <div className="w-10 h-px bg-white/10 my-1.5" />
       <RailLink to="/import" icon={Upload} label="ייבוא" testid="nav-import" />
       <div className="flex-1" />
-      <DriveRailItem bookId={bookId} />
+      <BackupRailItem />
       <RailLink to="/settings" icon={Settings} label="הגדרות" testid="nav-settings" />
       <div className="mt-2"><AccountButton /></div>
     </nav>

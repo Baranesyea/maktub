@@ -5,16 +5,25 @@ import { db } from '@/api/db'
 import { chapterLabel } from '@/hooks/useBook'
 import { formatNumber, htmlToText, wordsInHtml } from '@/lib/text'
 import { toast } from '@/lib/toast'
+import { copiesOf } from '@/lib/journal'
 import { cn } from '@/lib/utils'
 
 /** Previous versions of a scene: view and restore. Restoring saves the current text as a version first. */
 export function VersionsDialog({ bk, scene, open, onClose }) {
   const [list, setList] = useState([])
   const [sel, setSel] = useState(null)
+  const [source, setSource] = useState('server')
   useEffect(() => {
     if (!open || !scene) return
-    db.Snapshot.filter({ scene_id: scene.id }, '-created_date', 50).then((r) => { setList(r); setSel(r[0] || null) }).catch(() => setList([]))
-  }, [open, scene?.id])
+    if (source === 'device') {
+      copiesOf(scene.id).then((r) => {
+        const rows = r.slice(0, 200).map((c) => ({ id: `d${c.key}`, created_date: new Date(c.at).toISOString(), content: c.html, word_count: c.words, reason: 'device' }))
+        setList(rows); setSel(rows[0] || null)
+      })
+    } else {
+      db.Snapshot.filter({ scene_id: scene.id }, '-created_date', 100).then((r) => { setList(r); setSel(r[0] || null) }).catch(() => setList([]))
+    }
+  }, [open, scene?.id, source])
   if (!scene) return null
   const saveNow = async () => {
     const s = await db.Snapshot.create({ book_id: bk.book.id, scene_id: scene.id, content: scene.content || '', word_count: scene.word_count || 0, reason: 'manual' })
@@ -29,13 +38,18 @@ export function VersionsDialog({ bk, scene, open, onClose }) {
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()} title={`גרסאות: ${scene.title || 'סצנה'}`} wide>
       <div className="flex flex-col md:flex-row gap-4 min-h-[50vh]">
-        <div className="md:w-60 flex flex-col gap-1">
-          <Button onClick={saveNow}>שמור גרסה עכשיו</Button>
-          {list.length === 0 && <p className="text-sm text-muted p-2">עוד אין גרסאות. מכתוב שומר גרסה לבד בכל פעם שמתחילים לערוך סצנה אחרי הפסקה.</p>}
+        <div className="md:w-60 flex flex-col gap-1 md:max-h-[65vh] md:overflow-y-auto">
+          <div className="flex rounded-lg border border-line bg-raised p-0.5 text-[13px] mb-1" role="group" aria-label="מאיפה">
+            {[['server', 'בשרת'], ['device', 'במכשיר הזה']].map(([k, l]) => (
+              <button key={k} className={cn('flex-1 h-8 rounded-md', source === k ? 'bg-surface shadow-[var(--shadow-sm)] font-black' : 'text-muted')} onClick={() => setSource(k)} aria-pressed={source === k} data-testid={`versions-${k}`}>{l}</button>
+            ))}
+          </div>
+          {source === 'server' && <Button onClick={saveNow}>שמור גרסה עכשיו</Button>}
+          {list.length === 0 && <p className="text-sm text-muted p-2">{source === 'device' ? 'עוד אין עותקים במכשיר הזה. בזמן כתיבה נשמר כאן עותק כל דקה, למשך שבוע.' : 'עוד אין גרסאות. בזמן כתיבה מכתוב שומר גרסה כל 5 דקות.'}</p>}
           {list.map((s) => (
-            <button key={s.id} onClick={() => setSel(s)} className={cn('text-start rounded-lg px-3 py-2 text-sm', sel?.id === s.id ? 'bg-accent-soft text-accent' : 'hover:bg-sunk')}>
-              <div>{new Date(s.created_date).toLocaleString('he-IL', { dateStyle: 'short', timeStyle: 'short' })}</div>
-              <div className="text-xs text-muted">{formatNumber(s.word_count || 0)} מילים · {s.reason === 'manual' ? 'נשמרה ידנית' : s.reason === 'before-restore' ? 'לפני שחזור' : s.reason === 'import' ? 'לפני ייבוא' : 'אוטומטית'}</div>
+            <button key={s.id} onClick={() => setSel(s)} className={cn('text-start rounded-lg px-3 py-2 text-sm', sel?.id === s.id ? 'bg-accent-soft font-black' : 'hover:bg-sunk')} data-testid="version-row">
+              <div>{new Date(s.created_date).toLocaleString('he-IL', { dateStyle: 'short', timeStyle: 'medium' })}</div>
+              <div className="text-xs text-muted">{formatNumber(s.word_count || 0)} מילים · {s.reason === 'manual' ? 'נשמרה ידנית' : s.reason === 'before-restore' ? 'לפני שחזור' : s.reason === 'import' ? 'לפני ייבוא' : s.reason === 'device' ? 'עותק במכשיר' : s.reason === 'rolling' ? 'תוך כדי כתיבה' : 'אוטומטית'}</div>
             </button>
           ))}
         </div>

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams, Link } from 'react-router-dom'
-import { Menu as MenuIcon, PanelLeft, Maximize2, Minimize2, BookOpen, Search, MoreVertical, Home, LayoutGrid, FileText, Upload, Download, CalendarClock, Clock, Trash2, Settings, HelpCircle, Check, X, Layers, Undo2, Lightbulb } from 'lucide-react'
+import { Menu as MenuIcon, PanelLeft, Maximize2, Minimize2, BookOpen, Search, MoreVertical, Home, LayoutGrid, FileText, Upload, Download, CalendarClock, Clock, Trash2, Settings, HelpCircle, Check, X, Layers, Undo2, Lightbulb, History } from 'lucide-react'
 import { useBook } from '@/hooks/useBook'
 import { useSettings } from '@/lib/settings'
 import { useLayoutMode, useOnScreenKeyboard, keepCaretInView } from '@/hooks/useViewport'
@@ -17,6 +17,7 @@ import { Menu, MenuItem, MenuSeparator, IconButton, Button } from '@/components/
 import { removeNoteAnchor, retypeNoteAnchor, splitAtCursor, ensureWordSelection } from '@/components/editor/extensions'
 import { useToday } from '@/lib/stats'
 import { useDriveState, markBookDirty } from '@/lib/drive'
+import { keepCopy, pruneCopies } from '@/lib/journal'
 import { db } from '@/api/db'
 import { toast } from '@/lib/toast'
 import { cn } from '@/lib/utils'
@@ -25,6 +26,8 @@ import { usePlanToday } from '@/hooks/usePlanToday'
 import { startTour } from '@/components/Tour'
 
 const SNAPSHOT_GAP_MS = 30 * 60 * 1000
+// While writing, a version is saved on the server every 5 minutes of work on a scene.
+const ROLLING_VERSION_MS = Number(globalThis.localStorage?.getItem('maktub_rolling_ms')) || 5 * 60 * 1000
 
 export default function Workspace() {
   const { bookId } = useParams()
@@ -63,6 +66,8 @@ export default function Workspace() {
   const chapterRef = useRef(null)
   const pendingScroll = useRef(null)
   const lastSnapshot = useRef(new Map())
+  const lastRolling = useRef(new Map())
+  const latestText = useRef(new Map())
   const typingTimer = useRef(null)
 
   // Default to the first chapter, or the one in the URL.
@@ -75,6 +80,15 @@ export default function Workspace() {
   }, [bk.loading, bk.flatChapters, chapterId, sceneId])
 
   useEffect(() => { if (bk.book) updateSettings({ last_book_id: bk.book.id }) }, [bk.book?.id])
+  useEffect(() => {
+    pruneCopies()
+    // Leaving the tab or the app: keep the very latest text on the device too.
+    const save = () => { for (const [sceneId, t] of latestText.current) keepCopy({ sceneId, bookId, ...t }, { force: true }); latestText.current.clear() }
+    const onHide = () => { if (document.visibilityState === 'hidden') save() }
+    document.addEventListener('visibilitychange', onHide)
+    window.addEventListener('pagehide', save)
+    return () => { save(); document.removeEventListener('visibilitychange', onHide); window.removeEventListener('pagehide', save) }
+  }, [bookId])
   useEffect(() => {
     const p = {}
     if (chapterId) p.ch = chapterId
@@ -134,6 +148,14 @@ export default function Workspace() {
     if (s && (!s.status || s.status === 'idea') && words > 0) patch.status = 'draft'
     bk.update('scenes', id, patch, { delay: 900 })
     markBookDirty(bookId)
+    latestText.current.set(id, { html, words })
+    keepCopy({ sceneId: id, bookId, html, words })
+    const now = Date.now()
+    if (!lastRolling.current.has(id)) lastRolling.current.set(id, now)
+    else if (now - lastRolling.current.get(id) >= ROLLING_VERSION_MS) {
+      lastRolling.current.set(id, now)
+      db.Snapshot.create({ book_id: bookId, scene_id: id, content: html, word_count: words, reason: 'rolling' }).catch(() => {})
+    }
     if (focusMode) {
       setTyping(true)
       clearTimeout(typingTimer.current)
@@ -363,7 +385,7 @@ export default function Workspace() {
           {layout === 'wide' && <span className="w-px h-5 bg-line" aria-hidden />}
           <SaveStatus />
           {layout !== 'narrow' && <span className="w-px h-5 bg-line" aria-hidden />}
-          {layout !== 'narrow' && <DriveBadge state={drive} onClick={() => navigate('/settings#drive')} />}
+          {layout !== 'narrow' && <DriveBadge state={drive} onClick={() => navigate('/backup')} />}
         </div>
         <span className="w-1" />
         {layout === 'wide' && <TextSizeControl value={size} onChange={setSize} />}
@@ -379,12 +401,13 @@ export default function Workspace() {
               {layout === 'narrow' && <MenuItem icon={Maximize2} onSelect={() => setFocusMode(true)}>מצב ריכוז</MenuItem>}
               <MenuItem onSelect={() => setSize(Math.min(32, size + 1))}>הגדל טקסט ({size})</MenuItem>
               <MenuItem onSelect={() => setSize(Math.max(13, size - 1))}>הקטן טקסט</MenuItem>
-              {layout === 'narrow' && <MenuItem onSelect={() => navigate('/settings#drive')}>גיבוי לדרייב</MenuItem>}
+              {layout === 'narrow' && <MenuItem onSelect={() => navigate('/backup')}>גיבוי</MenuItem>}
               <MenuSeparator />
             </>
           )}
           <MenuItem icon={LayoutGrid} onSelect={() => setView(view === 'board' ? 'write' : 'board')}>{view === 'board' ? 'תצוגת כתיבה' : 'לוח כרטיסים'}</MenuItem>
           <MenuItem icon={Search} onSelect={() => setDialog('find')}>חיפוש והחלפה</MenuItem>
+          <MenuItem icon={History} onSelect={() => scene ? setDialog('versions') : toast('לחצו קודם בתוך סצנה')}>גרסאות של הסצנה</MenuItem>
           <MenuItem icon={Lightbulb} onSelect={() => setDialog('ideas')}>תיבת רעיונות</MenuItem>
           <MenuSeparator />
           <MenuItem icon={Upload} onSelect={() => navigate(`/book/${bookId}/import`)}>ייבוא קובץ וורד</MenuItem>

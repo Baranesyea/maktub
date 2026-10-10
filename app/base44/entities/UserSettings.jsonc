@@ -53,6 +53,7 @@
     "prefs_version": { "type": "number" },
     "write_weight": { "type": "number" },
     "ui_weight": { "type": "number" },
+    "backup_email": { "type": "object" },
     "words_per_hour": {
       "type": "number"
     }

@@ -1,0 +1,17 @@
+{
+  "name": "emailBackup",
+  "entry": "entry.ts",
+  "automations": [
+    {
+      "type": "scheduled",
+      "name": "weekly_backup_email",
+      "description": "Every morning (09:00 Israel): sends the weekly backup email to writers whose chosen day is today.",
+      "function_args": { "mode": "weekly" },
+      "is_active": true,
+      "schedule_mode": "recurring",
+      "schedule_type": "cron",
+      "ends_type": "never",
+      "cron_expression": "0 6 * * *"
+    }
+  ]
+}

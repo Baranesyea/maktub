@@ -1,24 +1,13 @@
-import { useEffect, useState } from 'react'
-import { useLocation } from 'react-router-dom'
-import { Cloud, CloudOff, ExternalLink, RefreshCw, LogOut, Check, Download, Compass } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { LogOut, Check, Compass, ShieldCheck } from 'lucide-react'
 import { useSettings, THEMES } from '@/lib/settings'
 import { FONTS } from '@/lib/fonts'
-import { connectDrive, disconnectDrive, isConnected, syncNow, driveAvailable } from '@/lib/drive'
 import { useAuth } from '@/lib/AuthContext'
 import { Page, Panel } from '@/components/AppShell'
 import { Button, inputClass } from '@/components/ui'
 import { startTour } from '@/components/Tour'
 import { cn, isMock } from '@/lib/utils'
-import { toast } from '@/lib/toast'
-import { db, ENTITIES } from '@/api/db'
-import { downloadBlob } from '@/lib/download'
 
-async function exportAll() {
-  const out = { app: 'מכתוב', exported_at: new Date().toISOString() }
-  for (const name of ENTITIES) out[name] = await db[name].list('-created_date', 5000).catch(() => [])
-  downloadBlob(new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' }), `מכתוב-גיבוי-${new Date().toISOString().slice(0, 10)}.json`)
-  toast('הגיבוי ירד למחשב')
-}
 
 function Choice({ checked, onClick, children, className, ...rest }) {
   return (
@@ -42,10 +31,6 @@ function Row({ label, hint, children }) {
 export default function SettingsPage() {
   const { settings, update } = useSettings()
   const { user, logout } = useAuth()
-  const location = useLocation()
-  useEffect(() => {
-    if (location.hash === '#drive') setTimeout(() => document.getElementById('drive')?.scrollIntoView({ behavior: 'smooth' }), 100)
-  }, [location.hash])
   const para = settings.paragraph_style || 'indent'
 
   return (
@@ -118,10 +103,8 @@ export default function SettingsPage() {
         </Row>
       </Panel>
 
-      <DriveSection />
-
-      <Panel title="המידע שלך" description="קובץ אחד עם כל הספרים, הפרקים, הסצנות, הפתקים, הרעיונות והדמויות.">
-        <Button onClick={exportAll} data-testid="export-all"><Download size={16} />הורד גיבוי מלא</Button>
+      <Panel title="גיבוי" description="שמירה מיידית, עותק במכשיר, גרסאות, גיבוי שבועי במייל וגוגל דרייב.">
+        <Link to="/backup"><Button><ShieldCheck size={16} />לעמוד הגיבוי</Button></Link>
       </Panel>
 
       {!isMock && (
@@ -136,51 +119,3 @@ export default function SettingsPage() {
   )
 }
 
-function DriveSection() {
-  const { settings } = useSettings()
-  const [busy, setBusy] = useState(false)
-  const connected = isConnected()
-  const drive = settings.drive || {}
-  const conflicts = Object.values(drive.books || {}).flatMap((b) => b.conflicts || [])
-  const available = driveAvailable()
-
-  const connect = async () => {
-    setBusy(true)
-    try {
-      await connectDrive()
-      toast('גוגל דרייב מחובר. הגיבוי הראשון מתחיל עכשיו.')
-    } catch (e) { toast(e.message || 'החיבור נכשל') }
-    setBusy(false)
-  }
-
-  return (
-    <Panel id="drive" className="scroll-mt-4" data-testid="drive-section"
-      title={<span className="flex items-center gap-2">{connected ? <Cloud size={18} className="text-ok" /> : <CloudOff size={18} className="text-warn" />}גיבוי לגוגל דרייב</span>}
-      description="עותק מסודר של כל ספר בדרייב שלך: תיקייה לכל ספר ומסמך לכל פרק. מתעדכן לבד כל חצי דקה כשיש שינוי.">
-      {connected ? (
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center gap-2 text-ok font-black"><Check size={16} />מחובר{drive.connected_at ? ` מאז ${new Date(drive.connected_at).toLocaleDateString('he-IL')}` : ''}</div>
-          <div className="flex flex-wrap gap-2">
-            <Button onClick={async () => { setBusy(true); if (settings.last_book_id) await syncNow(settings.last_book_id); setBusy(false) }} disabled={busy || !settings.last_book_id}><RefreshCw size={15} />סנכרן עכשיו</Button>
-            {drive.root_folder_id && <a href={`https://drive.google.com/drive/folders/${drive.root_folder_id}`} target="_blank" rel="noreferrer"><Button><ExternalLink size={15} />פתח בדרייב</Button></a>}
-            <Button variant="danger" onClick={disconnectDrive}>נתק</Button>
-          </div>
-          {conflicts.length > 0 && (
-            <div className="text-sm">
-              <div className="font-black text-warn mb-1">פרקים שנערכו ישירות בגוגל דוקס (העותק נשמר):</div>
-              {conflicts.slice(-10).map((c, i) => <div key={i} className="text-muted">{c.name}</div>)}
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="flex flex-wrap items-center gap-3">
-          <Button variant="primary" size="lg" onClick={connect} disabled={busy || !available} data-testid="drive-connect">
-            <svg width="18" height="18" viewBox="0 0 87.3 78" aria-hidden><path d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5z" fill="#0066da"/><path d="m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44a9.06 9.06 0 0 0 -1.2 4.5h27.5z" fill="#00ac47"/><path d="m73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5h-27.502l5.852 11.5z" fill="#ea4335"/><path d="m43.65 25 13.75-23.8c-1.35-.8-2.9-1.2-4.5-1.2h-18.5c-1.6 0-3.15.45-4.5 1.2z" fill="#00832d"/><path d="m59.8 53h-32.3l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="#2684fc"/><path d="m73.4 26.5-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3l-13.75 23.8 16.15 28h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00"/></svg>
-            חיבור לגוגל דרייב
-          </Button>
-          <span className="text-[13px] text-muted">{available ? 'לחיצה אחת, ואישור בחלון של גוגל. מכתוב רואה רק את הקבצים שהוא עצמו יוצר.' : 'החיבור לדרייב יופעל בקרוב.'}</span>
-        </div>
-      )}
-    </Panel>
-  )
-}

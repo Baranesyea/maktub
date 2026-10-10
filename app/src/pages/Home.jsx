@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Plus, Upload, MoreVertical, Flame, CloudOff, ArrowLeft, Archive, Copy, Pencil, Trash2, CalendarClock } from 'lucide-react'
+import { Plus, Upload, MoreVertical, Flame, ShieldCheck, ArrowLeft, Archive, Copy, Pencil, Trash2, CalendarClock } from 'lucide-react'
 import { useSettings } from '@/lib/settings'
 import { useBook } from '@/hooks/useBook'
 import { usePlanToday } from '@/hooks/usePlanToday'
@@ -56,9 +56,9 @@ export default function Home() {
         <Button variant="primary" onClick={() => setNewOpen(true)} data-testid="new-book"><Plus size={16} />ספר חדש</Button>
       </>}
     >
-      {!isConnected() && (
+      {!isConnected() && !settings.backup_email?.enabled && (
         <div className="rounded-xl border border-line bg-raised px-4 py-3 flex flex-wrap items-center gap-3" data-testid="drive-reminder">
-          <span className="w-9 h-9 rounded-lg bg-surface border border-line flex items-center justify-center shrink-0"><CloudOff size={18} className="text-warn" /></span>
+          <span className="w-9 h-9 rounded-lg bg-surface border border-line flex items-center justify-center shrink-0"><ShieldCheck size={18} /></span>
           <div className="flex-1 min-w-[220px]">
             <div className="font-black text-[15px]">הספרים שלך עוד לא מגובים בגוגל דרייב</div>
             <div className="text-[13px] text-muted">מומלץ: עותק מסודר של כל פרק בדרייב שלך, שמתעדכן לבד.</div>

@@ -610,11 +610,10 @@ await test('settings: system and writing fonts are separate', async (page) => {
   const ui = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--ui-font'))
   const wr = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--write-font'))
   assert(ui.includes('Rubik') && wr.includes('Mockup'), ui + ' / ' + wr)
-  assert(await page.locator('[data-testid="drive-connect"]').count() === 1, 'drive connect button')
 })
 
-await test('settings: download a full backup of everything', async (page) => {
-  await page.goto(BASE + '/settings')
+await test('backup: download a full backup of everything', async (page) => {
+  await page.goto(BASE + '/backup')
   const [dl] = await Promise.all([page.waitForEvent('download'), page.click('[data-testid="export-all"]')])
   const file = path.join(OUT, 'backup.json')
   await dl.saveAs(file)
@@ -631,7 +630,7 @@ await test('editor: highlight and paragraph style', async (page) => {
   assert((await store(page, 'Scene')).find((s) => s.id === 's2').content.includes('<mark>'), 'highlight saved')
 })
 
-await test('guided tour: first visit, next, skip, ends with Drive', async (page) => {
+await test('guided tour: first visit, next, skip, ends with backup', async (page) => {
   await page.evaluate(() => { const rows = JSON.parse(localStorage.getItem('maktub_mock_UserSettings')); rows[0].tour_done = false; localStorage.setItem('maktub_mock_UserSettings', JSON.stringify(rows)); localStorage.removeItem('maktub_settings_cache') })
   await openBook(page)
   await page.waitForSelector('[data-testid="tour"]', { timeout: 5000 })
@@ -640,8 +639,7 @@ await test('guided tour: first visit, next, skip, ends with Drive', async (page)
   assert(await page.locator('[data-testid="tour-drive"]').isVisible(), 'last step offers Drive')
   await page.screenshot({ path: `${OUT}/tour-last.png` })
   await page.click('[data-testid="tour-next"]')
-  await sleep(700)
-  assert((await store(page, 'UserSettings'))[0].tour_done === true, 'tour marked done')
+  await waitFor(async () => (await store(page, 'UserSettings'))[0].tour_done === true, 'tour marked done', 5000)
 })
 
 await test('existing writers move to one font and the light theme, even on a dark device', { colorScheme: 'dark' }, async (page) => {
@@ -686,6 +684,39 @@ await test('guided tour waits for a slow server before it starts', async (page) 
   assert(await page.locator('[data-testid="workspace"]').count() === 1, 'tour shown over the loaded editor')
   await page.evaluate(() => localStorage.removeItem('maktub_mock_latency'))
   assert((await store(page, 'UserSettings'))[0].tour_done !== true, 'not marked done before it was seen')
+})
+
+await test('backup page: from the rail, layers shown, weekly email on, send now', async (page) => {
+  await openBook(page)
+  await page.click('[data-testid="nav-backup"]')
+  await page.waitForSelector('[data-testid="backup"]')
+  for (const id of ['layer-instant', 'layer-device', 'layer-versions', 'layer-email', 'drive-section']) assert(await page.locator(`[data-testid="${id}"]`).isVisible(), id)
+  await page.click('[data-testid="backup-email-toggle"]')
+  await page.selectOption('[data-testid="backup-email-day"]', '0')
+  await waitFor(async () => { const u = (await store(page, 'UserSettings'))[0]; return u.backup_email?.enabled === true && u.backup_email?.day === 0 }, 'weekly email saved')
+  await page.click('[data-testid="backup-email-now"]')
+  await waitFor(async () => !!(await store(page, 'UserSettings'))[0].backup_email?.last_sent_at, 'send now recorded')
+  await page.screenshot({ path: `${OUT}/backup.png`, fullPage: true })
+  await page.goto(BASE + '/')
+  await page.waitForSelector('[data-testid="today-card"]')
+  assert(await page.locator('[data-testid="drive-reminder"]').count() === 0, 'reminder gone once the weekly email is on')
+})
+
+await test('while writing: a copy on the device and a version every few minutes', async (page) => {
+  await page.evaluate(() => localStorage.setItem('maktub_rolling_ms', '1500'))
+  await openBook(page)
+  const ed = editorOf(page, 's2')
+  await ed.click(); await page.keyboard.press('End')
+  await page.keyboard.type(' שורה ראשונה')
+  await sleep(1800)
+  await page.keyboard.type(' ועוד אחת')
+  await waitFor(async () => (await store(page, 'Snapshot')).some((x) => x.reason === 'rolling' && x.content.includes('ראשונה')), 'rolling version on the server')
+  await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')))
+  await page.click('[data-testid="more-menu"]')
+  await page.getByRole('menuitem', { name: 'גרסאות של הסצנה' }).click()
+  await page.click('[data-testid="versions-device"]')
+  await waitFor(async () => (await page.locator('[data-testid="version-row"]').count()) >= 1, 'device copy listed')
+  await page.evaluate(() => localStorage.removeItem('maktub_rolling_ms'))
 })
 
 // ---------------------------------------------------------------- iPad and phone

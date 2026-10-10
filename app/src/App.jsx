@@ -14,6 +14,7 @@ import Plan from '@/pages/Plan'
 import Timeline from '@/pages/Timeline'
 import ImportPage from '@/pages/Import'
 import SettingsPage from '@/pages/Settings'
+import BackupPage from '@/pages/Backup'
 import { Login, Register, ForgotPassword, ResetPassword } from '@/pages/Auth'
 
 function DriveBinder() {
@@ -72,6 +73,7 @@ function Shell() {
           <Route path="/book/:bookId/import" element={<ImportPage />} />
           <Route path="/import" element={<ImportPage />} />
           <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/backup" element={<BackupPage />} />
           <Route path="*" element={<Home />} />
         </Route>
       </Routes>

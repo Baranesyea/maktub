@@ -15,7 +15,7 @@ const STEPS = [
   { sel: '[data-tour="focus"]', title: 'ריכוז וקריאה', text: 'מצב ריכוז מעלים הכול חוץ מהטקסט. ליד: מצב קריאה, כמו ספר. פלוס ומינוס מגדילים רק את הטקסט.' },
   { sel: '[data-testid="today-pill"]', title: 'היעד של היום', text: 'כמה כתבת היום מתוך היעד. לחיצה מובילה ללוח הבית: רצף, הסצנה הבאה, והערה לעצמך למחר.' },
   { sel: '[data-tour="more"]', title: 'ייבוא, ייצוא ועוד', text: 'כאן: ייבוא ספר מוורד, ייצוא לוורד ולפי די אף, תכנון זמנים, ציר זמן, לוח כרטיסים וסל מחזור.' },
-  { sel: '[data-tour="drive"]', title: 'גיבוי לגוגל דרייב', text: 'מומלץ: עותק מסודר של כל פרק בדרייב שלך, שמתעדכן לבד. זה לוקח שתי לחיצות.', drive: true },
+  { sel: '[data-testid="nav-backup"]', title: 'גיבוי', text: 'כל מילה נשמרת מיד, ויש גם עותק במכשיר וגרסה כל 5 דקות. כאן מדליקים גיבוי שבועי למייל שלך.', drive: true },
 ]
 
 function visible(el) {
@@ -107,7 +107,7 @@ export default function Tour() {
         <div className="font-semibold">{step.title}</div>
         <div className="text-sm leading-6">{step.text}</div>
         {step.drive && !isConnected() && (
-          <Button variant="primary" onClick={() => { finish(); navigate('/settings#drive') }} data-testid="tour-drive">חבר את גוגל דרייב</Button>
+          <Button variant="primary" onClick={() => { finish(); navigate('/backup') }} data-testid="tour-drive">להגדרות הגיבוי</Button>
         )}
         <div className="flex items-center gap-2 mt-1">
           <Button size="sm" variant="ghost" onClick={finish} data-testid="tour-skip">דלג</Button>

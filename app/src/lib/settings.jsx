@@ -21,6 +21,7 @@ const DEFAULTS = {
   note_to_self: null,
   last_book_id: null,
   drive: null,
+  backup_email: null,
   words_per_hour: null,
 }
 
