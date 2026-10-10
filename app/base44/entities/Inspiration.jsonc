@@ -1,28 +1,85 @@
 {
   "name": "Inspiration",
-  "type": "object",
   "properties": {
-    "book_id": { "type": "string" },
-    "kind": { "type": "string", "enum": ["image", "note"], "default": "image", "description": "image: a picture with its own page; note: a sticky note that lives on the board" },
-    "title": { "type": "string" },
-    "file_uri": { "type": "string", "description": "Private file (full size)" },
-    "thumb_uri": { "type": "string", "description": "Private file (small, for the gallery)" },
-    "width": { "type": "number" },
-    "height": { "type": "number" },
-    "content": { "type": "string", "description": "Notes about the image, rich text" },
-    "content_more": { "type": "array", "items": { "type": "string" }, "description": "The rest of a long text: the server limits each text field to about 20,000 characters" },
-    "link_chapter_id": { "type": "string" },
-    "link_scene_id": { "type": "string" },
-    "character_ids": { "type": "array", "items": { "type": "string" } },
-    "board": { "type": "object", "description": "Place on the inspiration board: x, y, w (and h for notes)" },
-    "order": { "type": "number" },
-    "deleted": { "type": "boolean", "default": false }
+    "board": {
+      "description": "Place on the inspiration board: x, y, w (and h for notes)",
+      "type": "object"
+    },
+    "book_id": {
+      "type": "string"
+    },
+    "character_ids": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "content": {
+      "description": "Notes about the image, rich text",
+      "type": "string"
+    },
+    "content_more": {
+      "description": "The rest of a long text: the server limits each text field to about 20,000 characters",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "deleted": {
+      "default": false,
+      "type": "boolean"
+    },
+    "file_uri": {
+      "description": "Private file (full size)",
+      "type": "string"
+    },
+    "height": {
+      "type": "number"
+    },
+    "kind": {
+      "default": "image",
+      "description": "image: a picture with its own page; note: a sticky note on the board; text: free text written straight on the board",
+      "enum": [
+        "image",
+        "note",
+        "text"
+      ],
+      "type": "string"
+    },
+    "link_chapter_id": {
+      "type": "string"
+    },
+    "link_scene_id": {
+      "type": "string"
+    },
+    "order": {
+      "type": "number"
+    },
+    "thumb_uri": {
+      "description": "Private file (small, for the gallery)",
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "width": {
+      "type": "number"
+    }
   },
-  "required": ["book_id"],
+  "required": [
+    "book_id"
+  ],
+  "type": "object",
   "rls": {
     "create": true,
-    "read": { "created_by": "{{user.email}}" },
-    "update": { "created_by": "{{user.email}}" },
-    "delete": { "created_by": "{{user.email}}" }
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "update": {
+      "created_by": "{{user.email}}"
+    },
+    "delete": {
+      "created_by": "{{user.email}}"
+    }
   }
 }
